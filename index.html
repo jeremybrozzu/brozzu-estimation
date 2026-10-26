@@ -248,7 +248,10 @@ table.adj td:last-child{text-align:right;font-variant-numeric:tabular-nums;font-
 .rdv .slots{display:flex;flex-wrap:wrap;gap:8px}
 .slot{font:600 .84rem var(--f-body);border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:999px;padding:9px 14px;cursor:pointer}
 .slot.on{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
-.notice{font-size:.8rem;color:var(--warn);margin-top:12px}
+.notice{font-size:.84rem;color:var(--warn);margin-top:12px}
+.notice .linkish{font-size:inherit}
+.sent{font-size:.84rem;color:var(--ok);margin-top:12px;font-weight:600}
+.rdv a.btn{display:inline-block;text-decoration:none}
 .sources{font-size:.78rem;color:var(--muted);margin-top:18px;max-width:65ch}
 footer{font-size:.74rem;color:var(--muted);padding-block:0 40px}
 footer p{max-width:70ch;margin:0 0 6px}
@@ -486,6 +489,11 @@ footer p{max-width:70ch;margin:0 0 6px}
 "use strict";
 document.getElementById("nojs").hidden=true;
 (function(){const s=document.createElement("script");s.src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js";s.async=true;document.head.append(s);})();
+/* ---------- Réglages de l'agence ----------
+   email   : adresse qui reçoit chaque demande (envoi via FormSubmit ; la première demande déclenche un e-mail d'activation à valider)
+   booking : lien de la page de réservation Google Agenda (planning de rendez-vous) ; vide = bouton masqué */
+const CONFIG = {email:"jeremy@brozzu.fr", booking:""};
+
 /* ---------- Données de marché (€/m², relevés octobre 2026) ----------
    pap = [appartement, maison] prix moyen PAP.fr (DVF + annonces) ; ra = prix médian RealAdvisor ; petit = peu de ventes d'appartements */
 const SECTEURS = {martigues:"Martigues",istres:"Istres",peyruis:"Peyruis – Forcalquier"};
@@ -1047,14 +1055,17 @@ function renderResult(d,est,saved){
    '<dl class="facts"><div class="fact"><dt>Prix de référence</dt><dd>'+fmtE(est.base)+' /m²</dd></div>'+
    '<div class="fact"><dt>Ajustements</dt><dd>'+pct(est.coef)+'</dd></div>'+
    '<div class="fact"><dt>Précision</dt><dd>'+lvl+' (± '+Math.round(est.spread*100)+' %)</dd></div></dl>'+
-   '<div class="rdv"><p><b>'+esc(d.prenom)+', quand pouvons-nous vous rappeler ?</b> Un conseiller BROZZU affine ce prix avec vous, puis vous propose une visite gratuite et un avis de valeur écrit.</p>'+
+   (CONFIG.booking?'<div class="rdv"><p><b>'+esc(d.prenom)+', rencontrons-nous.</b> Choisissez directement un créneau dans l\'agenda de l\'agence : un conseiller BROZZU affine ce prix avec vous et prépare la visite gratuite.</p>'+
+     '<a class="btn" id="bookBtn" href="'+esc(CONFIG.booking)+'" target="_blank" rel="noopener">Prendre rendez-vous</a>'+
+     '<p class="sub" style="margin:14px 0 8px">Vous préférez être rappelé ? Indiquez quand :</p>':
+     '<div class="rdv"><p><b>'+esc(d.prenom)+', quand pouvons-nous vous rappeler ?</b> Un conseiller BROZZU affine ce prix avec vous, puis vous propose une visite gratuite et un avis de valeur écrit.</p>')+
    '<div class="slots" id="slots"><button type="button" class="slot">Aujourd\'hui</button><button type="button" class="slot">Demain matin</button><button type="button" class="slot">Demain après-midi</button><button type="button" class="slot">En fin de semaine</button></div>'+
    '<p class="sub" id="slotMsg" style="margin:10px 0 0" hidden></p></div>'+
    '<h3>Le détail du calcul</h3>'+
    '<table class="adj"><tbody><tr><td>Prix moyen des ventes, '+esc(est.zone)+' ('+(est.nbSrc===2?"2 sources croisées":"1 source")+')</td><td>'+fmtE(est.base)+' /m²</td></tr>'+
    (rows||'<tr><td>Aucun ajustement : votre bien correspond au prix moyen du secteur</td><td>0 %</td></tr>')+
    '<tr><td><b>Prix retenu</b></td><td>'+fmtE(est.m2)+' /m²</td></tr></tbody></table>'+
-   (saved?"":'<p class="notice">Mode démonstration : cette demande n\'a pas pu être enregistrée dans l\'espace agence.</p>')+
+   (saved?'<p class="sent">Votre demande a bien été transmise à l\'agence BROZZU.</p>':'<p class="notice" id="sendFail">Votre demande n\'a pas pu être transmise à l\'agence. Vérifiez votre connexion, puis <button type="button" class="linkish" id="resend">renvoyez-la</button>.</p>')+
    '<p class="sources">Ce calcul croise les prix publiés par PAP.fr (ventes DVF et annonces) et RealAdvisor en octobre 2026, puis applique des coefficients d\'usage. La fourchette s\'élargit quand le marché local compte peu de ventes.</p>'+
    '<div class="nav"><span></span><button type="button" class="btn ghost" id="restart">Estimer un autre bien</button></div>';
   countUp($("#pLow"),est.low);countUp($("#pHigh"),est.high);
@@ -1068,8 +1079,14 @@ function renderResult(d,est,saved){
   R.querySelectorAll(".slot").forEach(b=>b.addEventListener("click",async()=>{
     R.querySelectorAll(".slot").forEach(x=>x.classList.toggle("on",x===b));
     const ok=await saveSlot(b.textContent);const m=$("#slotMsg");m.hidden=false;
-    m.textContent=ok?"C'est noté : nous vous appelons "+b.textContent.toLowerCase()+" au "+d.tel+".":"C'est noté. (Mode démonstration : le créneau n'a pas été enregistré.)";
+    m.textContent=ok?"C'est noté : nous vous appelons "+b.textContent.toLowerCase()+" au "+d.tel+".":"Ce choix n'a pas pu être transmis. Vérifiez votre connexion et touchez à nouveau le créneau.";
   }));
+  const rs=R.querySelector("#resend");
+  if(rs)rs.addEventListener("click",async()=>{rs.disabled=true;rs.textContent="envoi en cours…";
+    const ok=await sendLead();const f=$("#sendFail");
+    if(ok){f.className="sent";f.textContent="Votre demande a bien été transmise à l'agence BROZZU.";}else{rs.disabled=false;rs.textContent="renvoyez-la";}});
+  const bk=R.querySelector("#bookBtn");
+  if(bk)bk.addEventListener("click",()=>{if(lastLead)sendMail("Prise de rendez-vous en cours – "+lastLead.prenom+" "+lastLead.nom,{"Client":lastLead.prenom+" "+lastLead.nom,"Téléphone":lastLead.tel,"E-mail":lastLead.email,"Action":"A ouvert l'agenda pour réserver un rendez-vous"});});
   R.querySelector("#restart").addEventListener("click",()=>{
     $("#form").reset();$("#quartierWrap").hidden=true;$("#market").hidden=true;$("#terrainNote").hidden=true;
     geoSel=null;manual=false;mapKey="";if(map&&parcelLyr){map.removeLayer(parcelLyr);parcelLyr=null;}
@@ -1085,9 +1102,40 @@ const ready=(async()=>{
   if(user){try{uid=await user.id();}catch(e){uid=null}}
   if(user&&db&&await user.isOwner().catch(()=>false))initOwner();
 })();
+let lastLead=null,lastEst=null;
+const L1=(arr,v)=>{const x=arr.find(e=>e[0]===v);return x?x[1]:v||"";};
+async function sendMail(subject,fields){
+  if(!CONFIG.email)return false;
+  try{const r=await fetch("https://formsubmit.co/ajax/"+encodeURIComponent(CONFIG.email),{method:"POST",
+      headers:{"Content-Type":"application/json","Accept":"application/json"},
+      body:JSON.stringify(Object.assign({_subject:subject,_template:"table",_captcha:"false"},fields))});
+    if(!r.ok)return false;const j=await r.json().catch(()=>({}));return String(j.success)==="true";}
+  catch(e){return false}
+}
+function mailFields(l){
+  const e=l.estimation,pc=l.parcelle,pt=pc&&pc.lon!=null?pc:l.geo,det=l.details;
+  const f={
+    "Client":l.prenom+" "+l.nom,"Téléphone":l.tel,"E-mail":l.email,
+    "Projet":L1(DELAIS,l.delai)||"Non précisé",
+    "Estimation":fmtE(e.bas)+" à "+fmtE(e.haut)+" (probable "+fmtE(e.probable)+", "+fmtE(e.prixM2)+"/m²)",
+    "Bien":(l.type==="maison"?"Maison":"Appartement")+" de "+l.surface+" m², "+(l.pieces==="6"?"6 pièces et +":l.pieces+" pièce(s)"),
+    "Adresse":(l.adresse||"Non renseignée")+" – "+l.commune+(l.quartier?" ("+l.quartier+")":""),
+    "Parcelle cadastrale":pc?(pc.section+" "+pc.numero+(pc.contenance?" – "+pc.contenance+" m²":"")+(pc.idu?" – "+pc.idu:"")):"Non validée",
+    "État":L1(ETATS,l.etat),"DPE":l.dpe==="?"?"Inconnu":l.dpe};
+  if(l.type==="appartement")f["Étage et extérieur"]=L1(ETAGES,det.etage)+(det.ascenseur?", ascenseur":"")+(det.dernier?", dernier étage":"")+" – extérieur : "+L1(EXTS,det.exterieur).toLowerCase();
+  else f["Terrain"]=L1(TERRAINS,det.terrain)+(det.piscine?", avec piscine":"");
+  f["Stationnement et vue"]=L1(PARKS,det.stationnement)+" – vue "+L1(VUES,det.vue).toLowerCase();
+  if(pt&&isFinite(pt.lon))f["Voir sur la carte"]="https://www.geoportail.gouv.fr/carte?c="+(+pt.lon).toFixed(6)+","+(+pt.lat).toFixed(6)+"&z=19&l0=ORTHOIMAGERY.ORTHOPHOTOS::GEOPORTAIL:OGC:WMTS(1)&l1=CADASTRALPARCELS.PARCELLAIRE_EXPRESS::GEOPORTAIL:OGC:WMTS(1)&permalink=yes";
+  f["Suivi trimestriel de la valeur"]=l.suiviValeur?"Oui":"Non";f["Conseils et actualité"]=l.optinConseils?"Oui":"Non";
+  f["Consentement RGPD"]="Oui, le "+new Date(l.date).toLocaleString("fr-FR");
+  f["_replyto"]=l.email;
+  return f;
+}
+async function sendLead(){
+  if(!lastLead)return false;const l=lastLead;
+  return sendMail("Nouvelle estimation – "+l.prenom+" "+l.nom+" – "+l.commune+" – "+Math.round(l.estimation.probable/1000)+" k€",mailFields(l));
+}
 async function saveLead(d,est){
-  await Promise.race([ready,new Promise(r=>setTimeout(r,4000))]);
-  if(!db||!uid)return false;
   const pc=geoSel&&geoSel.parcel;
   const entry={id:Date.now().toString(36),date:new Date().toISOString(),type:d.type,commune:est.commune,quartier:est.quartier,secteur:est.secteur,adresse:geoSel&&geoSel.communeId?geoSel.label:d.adresse,
     geo:geoSel&&geoSel.communeId?{lon:geoSel.lon,lat:geoSel.lat}:null,
@@ -1095,15 +1143,25 @@ async function saveLead(d,est){
     surface:d.surface,pieces:d.pieces,etat:d.etat,dpe:d.dpe,details:{etage:d.etage,ascenseur:d.ascenseur,dernier:d.dernier,exterieur:d.ext,terrain:d.terrain,piscine:d.piscine,stationnement:d.park,vue:d.vue},
     estimation:{bas:est.low,probable:est.mid,haut:est.high,prixM2:Math.round(est.m2),precision:est.level},
     delai:d.delai,prenom:d.prenom,nom:d.nom,tel:d.tel,email:d.email,consentement:true,suiviValeur:d.suivi,optinConseils:d.optin,rappel:""};
-  try{const ref=db.doc("leads/"+uid);const snap=await ref.get();
+  lastLead=entry;lastEst=est;
+  const mail=sendLead();
+  let dbOk=false;
+  await Promise.race([ready,new Promise(r=>setTimeout(r,4000))]);
+  if(db&&uid){try{const ref=db.doc("leads/"+uid);const snap=await ref.get();
     const prev=snap.exists?(snap.data().demandes||[]):[];
-    await ref.set({demandes:[...prev,entry].slice(-50),maj:entry.date});lastLeadRef=entry.id;return true;}catch(e){return false}
+    await ref.set({demandes:[...prev,entry].slice(-50),maj:entry.date});lastLeadRef=entry.id;dbOk=true;}catch(e){dbOk=false}}
+  const mailOk=await mail;
+  return dbOk||mailOk;
 }
 async function saveSlot(slot){
-  if(!db||!uid||!lastLeadRef)return false;
-  try{const ref=db.doc("leads/"+uid);const snap=await ref.get();if(!snap.exists)return false;
-    const list=(snap.data().demandes||[]).map(x=>x.id===lastLeadRef?Object.assign({},x,{rappel:slot}):x);
-    await ref.set({demandes:list,maj:new Date().toISOString()});return true;}catch(e){return false}
+  let ok=false;
+  if(lastLead){lastLead.rappel=slot;
+    ok=await sendMail("Rappel souhaité : "+slot.toLowerCase()+" – "+lastLead.prenom+" "+lastLead.nom,{"Client":lastLead.prenom+" "+lastLead.nom,"Téléphone":lastLead.tel,"E-mail":lastLead.email,"Rappel souhaité":slot,"Bien":(lastLead.type==="maison"?"Maison":"Appartement")+" de "+lastLead.surface+" m² – "+lastLead.commune});}
+  if(db&&uid&&lastLeadRef){
+    try{const ref=db.doc("leads/"+uid);const snap=await ref.get();if(snap.exists){
+      const list=(snap.data().demandes||[]).map(x=>x.id===lastLeadRef?Object.assign({},x,{rappel:slot}):x);
+      await ref.set({demandes:list,maj:new Date().toISOString()});ok=true;}}catch(e){}}
+  return ok;
 }
 
 /* ---------- Espace agence (propriétaire uniquement) ---------- */
