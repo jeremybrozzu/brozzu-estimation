@@ -63,6 +63,14 @@ body {
   to { opacity: 1; transform: none; }
 }
 
+@keyframes fondu {
+  from { opacity: 0; }
+}
+
+@keyframes glisse {
+  from { transform: translateX(100%); }
+}
+
 @keyframes scroll-hint {
   0% { transform: scaleY(0); transform-origin: top; }
   45% { transform: scaleY(1); transform-origin: top; }

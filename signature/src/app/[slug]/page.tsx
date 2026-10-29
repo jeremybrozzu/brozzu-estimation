@@ -10,6 +10,7 @@ import { Presentation } from "@/components/bien/Presentation";
 import { Galerie } from "@/components/bien/Galerie";
 import { Caracteristiques } from "@/components/bien/Caracteristiques";
 import { Diagnostic } from "@/components/bien/Diagnostic";
+import { ParcoursVisite } from "@/components/visite/ParcoursVisite";
 
 export function generateStaticParams() {
   return biens.filter((b) => b.publie).map((b) => ({ slug: b.slug }));
@@ -92,21 +93,29 @@ export default async function BienPage({ params }: PageProps<"/[slug]">) {
         <Caracteristiques bien={bien} />
         {!bien.demo && <Diagnostic bien={bien} />}
 
-        <section id="visite" className="bg-anthracite text-ivoire">
-          <div className="mx-auto flex max-w-6xl flex-col items-start gap-8 px-6 py-28 sm:flex-row sm:items-end sm:justify-between">
+        <section id="visite" data-masque-cta className="bg-anthracite text-ivoire">
+          <div className="mx-auto flex max-w-6xl flex-col gap-10 px-6 py-24 sm:py-28 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <p className="surtitre text-champagne">Visite privée</p>
               <h2 className="mt-5 max-w-xl font-serif text-4xl leading-tight sm:text-5xl">Organiser une visite privée</h2>
               <p className="mt-5 max-w-md text-sm leading-7 text-ivoire/70">
-                Le parcours acquéreur en quatre étapes et la réservation de créneau arrivent en phase 4.
+                Quelques questions pour mieux vous connaître, puis choisissez un créneau ou demandez à être rappelé.
               </p>
+              <p className="mt-8 font-serif text-xl italic text-champagne">Des lieux. Des vies. Une histoire.</p>
             </div>
-            <p className="font-serif text-xl italic text-champagne">Des lieux. Des vies. Une histoire.</p>
+            <a
+              href="#visite"
+              data-ouvrir-visite
+              className="group flex items-center justify-center gap-4 self-start rounded-full bg-ivoire py-4 pl-7 pr-6 text-anthracite transition-colors hover:bg-champagne lg:self-center"
+            >
+              <span className="surtitre text-[0.66rem]">Organiser une visite</span>
+              <span aria-hidden className="block h-px w-8 bg-cuivre transition-all duration-500 ease-luxe group-hover:w-12" />
+            </a>
           </div>
         </section>
       </main>
 
-      <footer className="bg-noir px-6 pb-28 pt-12 text-center">
+      <footer data-masque-cta className="bg-noir px-6 py-12 text-center">
         <p className="font-serif text-lg tracking-[0.3em] text-ivoire">BROZZU</p>
         <p className="mt-1 font-serif text-sm italic text-ivoire/60">L&apos;Atelier Immo</p>
         <a href="https://www.brozzu.fr" className="mt-6 inline-block surtitre text-[0.6rem] text-champagne hover:opacity-70">
@@ -115,6 +124,7 @@ export default async function BienPage({ params }: PageProps<"/[slug]">) {
       </footer>
 
       <VisitButton />
+      <ParcoursVisite bien={bien.slug} titreBien={`${bien.titre} · ${bien.commune}`} />
     </>
   );
 }

@@ -44,6 +44,26 @@ puis de l'ajouter dans `src/content/biens/index.ts`.
 | Accessibilité | `prefers-reduced-motion` → accueil fixe + textes en clair | Aucune animation imposée. |
 | Framework | Next.js 16 (App Router) + TypeScript + Tailwind CSS 4 | Pages pré-générées (rapides, bien référencées) et fonctions serveur pour le formulaire, l'agenda et l'administration (phases 4-5). |
 
+## Parcours acquéreur
+
+Tout élément portant `data-ouvrir-visite` ouvre le parcours (`src/components/visite/ParcoursVisite.tsx`).
+Le même schéma Zod (`src/lib/demande.ts`) valide le formulaire et l'API.
+
+- `POST /api/demandes` : enregistre la fiche (clé anti-double envoi, champ piège anti-robots,
+  contrôle du créneau). Stockage local provisoire dans `.donnees/demandes.json` (ignoré par git).
+- `GET /api/creneaux?bien=<slug>` : créneaux proposés, calculés depuis `src/content/agence.ts`
+  (plages, durée, délai minimum). Marqués `demo: true` tant que Google Agenda n'est pas connecté :
+  l'interface l'indique et ne présente jamais un créneau comme confirmé.
+
+### Aperçu publié
+
+L'aperçu hors Next.js embarque le parcours compilé, en mode `apercu` (aucun envoi) :
+
+```bash
+npx esbuild scripts/entree-apercu.tsx --bundle --minify --format=iife --jsx=automatic \
+  --define:process.env.NODE_ENV='"production"' --outfile=<dossier-apercu>/parcours.js
+```
+
 ## Structure
 
 ```
@@ -60,6 +80,6 @@ public/brand/                      Logo et monogramme officiels
 1. ✅ Analyse et direction artistique
 2. ✅ Accueil immersif piloté par le scroll
 3. ✅ Présentation du bien : annonce, caractéristiques, galerie, DPE/GES, mentions légales
-4. Parcours acquéreur en 4 étapes (React Hook Form + Zod)
+4. ✅ Parcours acquéreur en 4 étapes (React Hook Form + Zod), récapitulatif, créneau ou rappel
 5. Serveur : stockage sécurisé, Google Agenda (OAuth côté serveur), e-mails, administration
 6. Vérifications : performances, accessibilité, sécurité, mobile
