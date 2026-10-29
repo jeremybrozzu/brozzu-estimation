@@ -1,0 +1,21 @@
+{
+  "slug": "demo",
+  "generatedAt": "2026-10-29T06:19:27.288Z",
+  "source": {
+    "width": 1920,
+    "height": 1080,
+    "duration": 7.97
+  },
+  "sets": {
+    "hd": {
+      "count": 160,
+      "width": 1920,
+      "height": 1080
+    },
+    "sd": {
+      "count": 80,
+      "width": 1280,
+      "height": 720
+    }
+  }
+}
