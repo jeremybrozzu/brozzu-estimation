@@ -58,8 +58,8 @@ public/brand/                      Logo et monogramme officiels
 ## Feuille de route
 
 1. ✅ Analyse et direction artistique
-2. ✅ Accueil immersif piloté par le scroll (démo) — **en attente de la vidéo réelle**
-3. Présentation du bien : annonce, caractéristiques, galerie, DPE/GES, mentions légales
+2. ✅ Accueil immersif piloté par le scroll
+3. ✅ Présentation du bien : annonce, caractéristiques, galerie, DPE/GES, mentions légales
 4. Parcours acquéreur en 4 étapes (React Hook Form + Zod)
 5. Serveur : stockage sécurisé, Google Agenda (OAuth côté serveur), e-mails, administration
 6. Vérifications : performances, accessibilité, sécurité, mobile
