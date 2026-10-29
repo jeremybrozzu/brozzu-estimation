@@ -22,12 +22,12 @@ Ouvrir <http://localhost:3000/demo> et faire défiler la page.
 ## Ajouter la vidéo d'un bien
 
 ```bash
-npm run video -- ~/Downloads/visite.mp4 villa-martigues 180
+npm run video -- ~/Downloads/visite.mov villa-martigues
 ```
 
 - 2ᵉ argument : le *slug*, qui devient l'URL (`/villa-martigues`).
-- 3ᵉ argument (facultatif) : nombre d'images extraites (180 par défaut, 60 à 400).
-  Comptez environ 20 à 25 images par seconde de vidéo pour une fluidité optimale.
+- 3ᵉ argument (facultatif) : nombre d'images extraites (150 par défaut, 60 à 400).
+  Comptez environ 12 à 20 images par seconde de vidéo : au-delà, le poids augmente sans gain visible.
 
 Le script crée `public/biens/<slug>/sequence/` (images grand écran, images mobile,
 poster, manifest). Il suffit ensuite de copier `src/content/biens/demo.ts` en

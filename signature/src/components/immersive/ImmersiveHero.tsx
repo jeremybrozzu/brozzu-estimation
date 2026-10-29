@@ -7,6 +7,7 @@ import type { ChapitreImmersif } from "@/content/types";
 import type { SequenceManifest } from "@/lib/sequence";
 import { useSequenceLoader, pickSet } from "./useSequenceLoader";
 import { Loader } from "./Loader";
+import { drawCover, drawFramed, isFramed } from "./drawFrame";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -75,32 +76,49 @@ function ScrollSequence({
 
   const { frames, ready, progress: loadProgress, nearest } = useSequenceLoader(sequence, set);
 
-  // Image courante, partagée entre le scroll et la boucle de dessin.
-  const current = useRef({ frame: 0, drawn: -1 });
+  const bgRef = useRef<HTMLCanvasElement>(null);
 
-  // Dessin « cover » dans le canvas, à la résolution de l'écran (DPR ≤ 2).
+  // Image courante et progression, partagées entre le scroll et la boucle de dessin.
+  const current = useRef({ frame: 0, progress: 0, drawn: "" });
+
+  // Dessin dans le canvas, à la résolution de l'écran (DPR ≤ 2).
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas || !set) return;
-    const ctx = canvas.getContext("2d", { alpha: false });
-    if (!ctx) return;
+    const bg = bgRef.current;
+    if (!canvas || !bg || !set) return;
+    const ctx = canvas.getContext("2d");
+    const bgCtx = bg.getContext("2d", { alpha: false });
+    if (!ctx || !bgCtx) return;
 
     let raf = 0;
+    let dpr = 1;
     const resize = () => {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
       canvas.width = Math.round(canvas.clientWidth * dpr);
       canvas.height = Math.round(canvas.clientHeight * dpr);
-      current.current.drawn = -1;
+      // Fond flou : une version minuscule de l'image, agrandie et floutée en CSS.
+      bg.width = 48;
+      bg.height = Math.max(1, Math.round((48 * canvas.height) / canvas.width));
+      current.current.drawn = "";
     };
     const draw = () => {
-      const idx = nearest(current.current.frame);
-      if (idx !== -1 && idx !== current.current.drawn) {
-        const img = frames.current[idx]!;
+      const { frame, progress } = current.current;
+      const idx = nearest(frame);
+      const img = idx === -1 ? undefined : frames.current[idx];
+      if (img) {
         const cw = canvas.width, ch = canvas.height;
-        const scale = Math.max(cw / img.naturalWidth, ch / img.naturalHeight);
-        const w = img.naturalWidth * scale, h = img.naturalHeight * scale;
-        ctx.drawImage(img, (cw - w) / 2, (ch - h) / 2, w, h);
-        current.current.drawn = idx;
+        const framed = isFramed(cw, ch, img.naturalWidth, img.naturalHeight);
+        const key = framed ? `${idx}:${progress.toFixed(3)}` : `${idx}`;
+        if (key !== current.current.drawn) {
+          if (framed) {
+            drawFramed(ctx, img, cw, ch, progress, dpr, "rgba(216,197,170,0.55)");
+            drawCover(bgCtx, img, bg.width, bg.height);
+          } else {
+            drawCover(ctx, img, cw, ch);
+          }
+          bg.style.display = framed ? "block" : "none";
+          current.current.drawn = key;
+        }
       }
       raf = requestAnimationFrame(draw);
     };
@@ -129,6 +147,7 @@ function ScrollSequence({
           scrub: 0.6,
           onUpdate: (self) => {
             current.current.frame = Math.round(self.progress * (count - 1));
+            current.current.progress = self.progress;
             if (barRef.current) barRef.current.style.transform = `scaleY(${self.progress})`;
           },
         },
@@ -174,6 +193,11 @@ function ScrollSequence({
           className="absolute inset-0 h-full w-full object-cover"
         />
         <canvas
+          ref={bgRef}
+          aria-hidden
+          className="absolute inset-0 hidden h-full w-full scale-110 blur-2xl brightness-[0.45] saturate-[0.8]"
+        />
+        <canvas
           ref={canvasRef}
           aria-hidden
           className="absolute inset-0 h-full w-full transition-opacity duration-700"
@@ -185,7 +209,7 @@ function ScrollSequence({
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,rgba(23,22,21,0.55))]" />
 
         {/* Introduction */}
-        <div ref={introRef} className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
+        <div ref={introRef} className="sur-image absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
           <p className="surtitre text-champagne">Signature Collection</p>
           <h1 className="mt-6 max-w-4xl font-serif text-5xl font-medium leading-[1.02] text-ivoire sm:text-7xl lg:text-8xl">
             {titre}
@@ -208,7 +232,7 @@ function ScrollSequence({
             ref={(el) => {
               chapterRefs.current[i] = el;
             }}
-            className="invisible absolute inset-x-0 bottom-[16svh] px-6 opacity-0 sm:bottom-auto sm:left-[8vw] sm:top-1/2 sm:max-w-xl sm:-translate-y-1/2 sm:px-0"
+            className="sur-image invisible absolute inset-x-0 bottom-[16svh] px-6 opacity-0 xl:bottom-auto xl:left-[7vw] xl:right-auto xl:top-1/2 xl:max-w-[min(34rem,calc(43vw-30svh))] xl:-translate-y-1/2 xl:px-0"
           >
             {c.surtitre && (
               <p className="surtitre flex items-center gap-4 text-champagne">
@@ -216,7 +240,7 @@ function ScrollSequence({
                 {c.surtitre}
               </p>
             )}
-            <p className="mt-4 font-serif text-4xl leading-tight text-ivoire sm:text-5xl">{c.texte}</p>
+            <p className="mt-4 font-serif text-4xl leading-tight text-ivoire text-balance sm:text-5xl">{c.texte}</p>
           </div>
         ))}
 

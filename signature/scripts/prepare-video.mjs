@@ -6,7 +6,7 @@
  *   npm run video -- <chemin/video.mp4> <slug-du-bien> [nombre-d-images]
  *
  * Produit dans public/biens/<slug>/sequence/ :
- *   hd/0001.webp …  — grand écran (côté long 1920 px)
+ *   hd/0001.webp …  — grand écran (côté long 1600 px)
  *   sd/0001.webp …  — mobile / appareils modestes (côté long 1280 px, une image sur deux)
  *   poster.webp     — première image (affichage immédiat + repli sans animation)
  *   final.webp      — dernière image
@@ -20,7 +20,7 @@
  *
  * Nécessite ffmpeg et ffprobe installés (https://ffmpeg.org).
  */
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readdirSync, rmSync, writeFileSync, copyFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 
@@ -39,7 +39,7 @@ if (!existsSync(input)) {
   process.exit(1);
 }
 
-const target = Math.max(60, Math.min(400, Number(framesArg) || 180));
+const target = Math.max(60, Math.min(400, Number(framesArg) || 150));
 
 const probe = JSON.parse(
   execFileSync("ffprobe", [
@@ -54,6 +54,22 @@ const duration = Number(probe.format.duration);
 let { width, height } = probe.streams[0];
 const rotation = Math.abs(Number(probe.streams[0].side_data_list?.[0]?.rotation ?? 0));
 if (rotation === 90 || rotation === 270) [width, height] = [height, width];
+
+// Bandes noires (enregistrement d'écran, vidéo 4/3 dans un cadre 16/9…) : détectées puis retirées.
+let crop = "";
+const detect = spawnSync("ffmpeg", [
+  "-v", "info", "-i", input, "-t", "20",
+  "-vf", "cropdetect=limit=24:round=2:reset=0", "-an", "-f", "null", "-",
+]).stderr.toString();
+const found = [...detect.matchAll(/crop=(\d+):(\d+):(\d+):(\d+)/g)].at(-1);
+if (found) {
+  const [, cw, ch, cx, cy] = found.map(Number);
+  if (cw * ch < width * height * 0.97) {
+    crop = `crop=${cw}:${ch}:${cx}:${cy},`;
+    console.log(`Bandes noires retirées : ${width}×${height} → ${cw}×${ch}`);
+    [width, height] = [cw, ch];
+  }
+}
 const landscape = width >= height;
 
 console.log(`Vidéo : ${width}×${height}, ${duration.toFixed(1)} s, ${landscape ? "paysage" : "portrait"}`);
@@ -68,8 +84,8 @@ function extract(set, longSide, count, quality) {
   const scale = landscape ? `scale=${Math.min(longSide, width)}:-2` : `scale=-2:${Math.min(longSide, height)}`;
   execFileSync("ffmpeg", [
     "-v", "error", "-y",
-    "-i", input,
-    "-vf", `fps=${count}/${duration},${scale}:flags=lanczos`,
+    "-i", input, "-an",
+    "-vf", `${crop}fps=${count}/${duration},${scale}:flags=lanczos`,
     "-frames:v", String(count),
     "-c:v", "libwebp", "-quality", String(quality), "-compression_level", "5",
     join(dir, "%04d.webp"),
@@ -82,7 +98,7 @@ function extract(set, longSide, count, quality) {
   return { count: files.length, width: dims.width, height: dims.height, files };
 }
 
-const hd = extract("hd", 1920, target, 74);
+const hd = extract("hd", 1600, target, 70);
 const sd = extract("sd", 1280, Math.round(target / 2), 68);
 
 copyFileSync(join(outDir, "hd", hd.files[0]), join(outDir, "poster.webp"));

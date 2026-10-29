@@ -51,6 +51,11 @@ body {
   text-transform: uppercase;
 }
 
+/* Texte posé sur la vidéo : reste lisible sur un ciel ou une terrasse claire */
+.sur-image {
+  text-shadow: 0 1px 2px rgb(23 22 21 / 0.35), 0 2px 28px rgb(23 22 21 / 0.55);
+}
+
 @keyframes scroll-hint {
   0% { transform: scaleY(0); transform-origin: top; }
   45% { transform: scaleY(1); transform-origin: top; }
