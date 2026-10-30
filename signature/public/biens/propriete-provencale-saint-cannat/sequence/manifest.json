@@ -1,6 +1,6 @@
 {
   "slug": "propriete-provencale-saint-cannat",
-  "generatedAt": "2026-10-29T06:57:23.975Z",
+  "generatedAt": "2026-10-30T15:33:08.156Z",
   "source": {
     "width": 1320,
     "height": 2346,
@@ -9,13 +9,13 @@
   "sets": {
     "hd": {
       "count": 150,
-      "width": 900,
-      "height": 1600
+      "width": 1080,
+      "height": 1920
     },
     "sd": {
       "count": 75,
-      "width": 720,
-      "height": 1280
+      "width": 1080,
+      "height": 1920
     }
   }
 }

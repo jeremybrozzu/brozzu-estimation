@@ -6,8 +6,8 @@
  *   npm run video -- <chemin/video.mp4> <slug-du-bien> [nombre-d-images]
  *
  * Produit dans public/biens/<slug>/sequence/ :
- *   hd/0001.webp …  — grand écran (côté long 1600 px)
- *   sd/0001.webp …  — mobile / appareils modestes (côté long 1280 px, une image sur deux)
+ *   hd/0001.webp …  — grand écran (côté long 1920 px)
+ *   sd/0001.webp …  — mobile / appareils modestes (même définition, une image sur deux)
  *   poster.webp     — première image (affichage immédiat + repli sans animation)
  *   final.webp      — dernière image
  *   manifest.json   — lu par le site (nombre d'images, dimensions)
@@ -98,8 +98,10 @@ function extract(set, longSide, count, quality) {
   return { count: files.length, width: dims.width, height: dims.height, files };
 }
 
-const hd = extract("hd", 1600, target, 70);
-const sd = extract("sd", 1280, Math.round(target / 2), 68);
+// Netteté : pleine résolution (côté long 1920 px) sur tous les écrans. Le jeu « sd » garde
+// la même définition — un téléphone recadre la vidéo et l'agrandit — avec deux fois moins d'images.
+const hd = extract("hd", 1920, target, 80);
+const sd = extract("sd", 1920, Math.round(target / 2), 76);
 
 copyFileSync(join(outDir, "hd", hd.files[0]), join(outDir, "poster.webp"));
 copyFileSync(join(outDir, "hd", hd.files.at(-1)), join(outDir, "final.webp"));

@@ -85,7 +85,7 @@ function ScrollSequence({
   // Image courante et progression, partagées entre le scroll et la boucle de dessin.
   const current = useRef({ frame: 0, progress: 0, drawn: "" });
 
-  // Dessin dans le canvas, à la résolution de l'écran (DPR ≤ 2).
+  // Dessin dans le canvas, à la résolution de l'écran (DPR ≤ 3).
   useEffect(() => {
     const canvas = canvasRef.current;
     const bg = bgRef.current;
@@ -97,7 +97,7 @@ function ScrollSequence({
     let raf = 0;
     let dpr = 1;
     const resize = () => {
-      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      dpr = Math.min(window.devicePixelRatio || 1, 3);
       canvas.width = Math.round(canvas.clientWidth * dpr);
       canvas.height = Math.round(canvas.clientHeight * dpr);
       // Fond flou : une version minuscule de l'image, agrandie et floutée en CSS.

@@ -39,7 +39,7 @@ puis de l'ajouter dans `src/content/biens/index.ts`.
 | Besoin | Choix | Pourquoi |
 | --- | --- | --- |
 | Vidéo pilotée au scroll | Séquence d'images WebP dessinée dans un `<canvas>` + GSAP ScrollTrigger | Faire avancer une balise `<video>` au scroll saccade sur iPhone et sur la plupart des vidéos web. Une séquence d'images est fluide partout et reste fidèle à 100 % à la vidéo. |
-| Mobile / appareils modestes | Jeu « sd » (1280 px, une image sur deux) | Choisi automatiquement : petit écran, économie de données, connexion lente, peu de mémoire. |
+| Mobile / appareils modestes | Jeu « sd » (même définition 1920 px, une image sur deux) | Un téléphone recadre la vidéo et l'agrandit : la définition est gardée, le nombre d'images divisé par deux. Choisi automatiquement : petit écran, économie de données, connexion lente, peu de mémoire. |
 | Chargement | Poster immédiat, puis images par passes (1/8, 1/4, 1/2, toutes) | Le scroll répond en ~1 s ; la finesse arrive en arrière-plan. Rideau de chargement levé au plus tard après 9 s. |
 | Accessibilité | `prefers-reduced-motion` → accueil fixe + textes en clair | Aucune animation imposée. |
 | Framework | Next.js 16 (App Router) + TypeScript + Tailwind CSS 4 | Pages pré-générées (rapides, bien référencées) et fonctions serveur pour le formulaire, l'agenda et l'administration (phases 4-5). |

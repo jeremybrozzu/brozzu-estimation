@@ -15,6 +15,8 @@ export function isFramed(cw: number, ch: number, iw: number, ih: number) {
 }
 
 export function drawCover(ctx: CanvasRenderingContext2D, img: HTMLImageElement, cw: number, ch: number) {
+  // Agrandissement de meilleure qualité (réinitialisé à chaque redimensionnement du canvas).
+  ctx.imageSmoothingQuality = "high";
   const s = Math.max(cw / img.naturalWidth, ch / img.naturalHeight);
   const w = img.naturalWidth * s, h = img.naturalHeight * s;
   ctx.drawImage(img, (cw - w) / 2, (ch - h) / 2, w, h);
@@ -35,6 +37,7 @@ export function drawFramed(
 ) {
   // Autour du cadre, on laisse voir le fond flou placé sous le canvas.
   ctx.clearRect(0, 0, cw, ch);
+  ctx.imageSmoothingQuality = "high";
 
   const h = ch * (0.8 + 0.2 * progress);
   const w = h * (img.naturalWidth / img.naturalHeight);
