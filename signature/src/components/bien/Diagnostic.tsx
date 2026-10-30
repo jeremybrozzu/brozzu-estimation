@@ -140,10 +140,12 @@ export function Diagnostic({ bien }: { bien: Bien }) {
                       )}
                     </dd>
                   </div>
-                  <div>
-                    <dt className="text-anthracite/60">Date du diagnostic</dt>
-                    <dd className="mt-1 font-medium">{d.date ? formatDate(d.date) : <ACompleter />}</dd>
-                  </div>
+                  {d.date && (
+                    <div>
+                      <dt className="text-anthracite/60">Date du diagnostic</dt>
+                      <dd className="mt-1 font-medium">{formatDate(d.date)}</dd>
+                    </div>
+                  )}
                 </dl>
               </>
             ) : (
@@ -179,13 +181,16 @@ export function Diagnostic({ bien }: { bien: Bien }) {
               {m?.copropriete && (
                 <div className="py-5">
                   <dt className="text-anthracite/60">Copropriété</dt>
-                  <dd className="mt-1 leading-6">
-                    Bien soumis au statut de la copropriété
-                    {m.copropriete.lots != null && <>, {formatNombre(m.copropriete.lots)} lots</>}
+                  <dd className="mt-1 flex flex-col gap-1.5 leading-6">
+                    <span>
+                      Bien soumis au statut de la copropriété
+                      {m.copropriete.lots != null && <>, {formatNombre(m.copropriete.lots)} lots</>}.
+                    </span>
                     {m.copropriete.chargesAnnuelles != null && (
-                      <>, charges courantes de {formatEuros(m.copropriete.chargesAnnuelles)} par an</>
+                      <span>Charges courantes : {formatEuros(m.copropriete.chargesAnnuelles)} par an.</span>
                     )}
-                    . {m.copropriete.procedure ?? "Aucune procédure en cours."}
+                    {m.copropriete.charges && <span>Charges : {m.copropriete.charges}</span>}
+                    {m.copropriete.procedure && <span>{m.copropriete.procedure}</span>}
                   </dd>
                 </div>
               )}

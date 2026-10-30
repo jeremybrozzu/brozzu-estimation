@@ -4,8 +4,8 @@ import type { Bien } from "../types";
  * Appartement vue port — Port-de-Bouc (référence V20000033).
  * Sources : vidéo et photos fournies par l'agence, fiche de l'annonce brozzu.fr.
  * Honoraires : mention retirée à la demande de l'agence.
- * Non renseignés dans l'annonce : copropriété (lots, charges, procédure),
- * date du DPE, étage exact (« 5 étage(s) » ambigu), surface Carrez (24 m² incohérent).
+ * Non disponible : date du DPE (non affichée). Copropriété : seules les charges sont communiquées.
+ * Non renseignés dans l'annonce : étage exact (« 5 étage(s) » ambigu), surface Carrez (24 m² incohérent).
  */
 export const appartementVuePortPortDeBouc: Bien = {
   slug: "appartement-vue-port-port-de-bouc",
@@ -77,7 +77,13 @@ export const appartementVuePortPortDeBouc: Bien = {
   mentions: {
     reference: "V20000033",
     honoraires: false,
-    copropriete: null,
+    copropriete: {
+      lots: null,
+      chargesAnnuelles: null,
+      charges:
+        "180 € par mois, comprenant les provisions pour le chauffage, l'eau chaude et l'eau froide, avec régularisation annuelle.",
+      procedure: null,
+    },
   },
 
   seo: {

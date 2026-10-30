@@ -72,6 +72,9 @@ export interface Diagnostic {
 export interface Copropriete {
   lots: number | null;
   chargesAnnuelles: number | null;
+  /** Détail libre des charges, ex. « 180 € par mois, provisions pour … ». */
+  charges?: string | null;
+  /** Procédure en cours ; `null` : non renseigné (rien n'est affiché). */
   procedure: string | null;
 }
 
