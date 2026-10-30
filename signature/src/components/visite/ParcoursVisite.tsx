@@ -8,6 +8,7 @@ import {
   demandeSchema, valeursInitiales, type Demande,
 } from "@/lib/demande";
 import { creneauxDemo, formatHeure, formatJour, type Creneau, type JourCreneaux } from "@/lib/creneaux";
+import { sections, suite } from "@/lib/resume";
 import { Cases, Champ, Communes, Consentement, Pastilles } from "./champs";
 import { ChoixCreneau } from "./ChoixCreneau";
 
@@ -19,7 +20,9 @@ import { ChoixCreneau } from "./ChoixCreneau";
  * Sinon, créneaux proposés sur le site, à confirmer par l'agence.
  *
  * S'ouvre au clic sur tout élément portant `data-ouvrir-visite`.
- * En mode `apercu`, rien n'est transmis : l'aperçu l'indique clairement.
+ * Envoi : API du site (serveur Next.js) ; ou, en hébergement statique (`envoiDirect`),
+ * directement du navigateur vers FormSubmit, qui relaie la fiche par e-mail — comme
+ * l'application d'estimation. En mode `apercu`, rien n'est transmis et l'aperçu l'indique.
  */
 
 const TITRES = ["Faisons connaissance", "Votre recherche immobilière", "Votre financement", "Parlons de votre projet"];
@@ -34,6 +37,7 @@ export function ParcoursVisite({
   titreBien,
   agenda,
   conseiller,
+  envoiDirect,
   apercu = false,
 }: {
   bien: string;
@@ -42,6 +46,8 @@ export function ParcoursVisite({
   agenda?: string;
   /** Nom du conseiller, affiché à l'acquéreur. */
   conseiller?: string;
+  /** Hébergement statique : adresse e-mail à laquelle FormSubmit relaie la fiche. */
+  envoiDirect?: string;
   apercu?: boolean;
 }) {
   const [ouvert, setOuvert] = useState(false);
@@ -53,6 +59,8 @@ export function ParcoursVisite({
   const [creneaux, setCreneaux] = useState<{ demo: boolean; jours: JourCreneaux[] } | null>(null);
   /** Clé anti-double envoi : créée au premier envoi, réutilisée si l'on réessaie. */
   const cleEnvoi = useRef<string | null>(null);
+  /** Référence de la demande en hébergement statique, conservée si l'on réessaie. */
+  const referenceDirecte = useRef<string | null>(null);
   const [siteWeb, setSiteWeb] = useState("");
 
   const panneau = useRef<HTMLDivElement>(null);
@@ -207,6 +215,9 @@ export function ParcoursVisite({
       if (apercu) {
         await new Promise((r) => setTimeout(r, 700));
         reference = "APERÇU";
+      } else if (envoiDirect) {
+        reference = (referenceDirecte.current ??= nouvelleReference());
+        await envoyerParFormSubmit(envoiDirect, valide.data, titreBien, reference, siteWeb);
       } else {
         const r = await fetch("/api/demandes", {
           method: "POST",
@@ -424,7 +435,7 @@ export function ParcoursVisite({
             )}
 
             {etape === ETAPE_RECAP && (
-              <Recapitulatif d={v as Demande} e={e} titre={titre} onModifier={modifier} control={control} />
+              <Recapitulatif d={v as Demande} e={e} titre={titre} onModifier={modifier} control={control} viaFormSubmit={Boolean(envoiDirect)} />
             )}
 
             {etape === ETAPE_CRENEAU && (
@@ -529,6 +540,41 @@ export function ParcoursVisite({
   );
 }
 
+/* ——— Envoi direct (hébergement statique) ——— */
+
+function nouvelleReference() {
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const octets = crypto.getRandomValues(new Uint8Array(4));
+  const d = new Date();
+  const suffixe = Array.from(octets, (b) => alphabet[b % alphabet.length]).join("");
+  return `BRZ-${String(d.getFullYear()).slice(2)}${String(d.getMonth() + 1).padStart(2, "0")}-${suffixe}`;
+}
+
+/** Même service que l'application d'estimation : FormSubmit relaie la fiche par e-mail. */
+async function envoyerParFormSubmit(email: string, d: Demande, titreBien: string, reference: string, piege: string) {
+  const champs: Record<string, string> = {
+    _subject: `Nouvelle demande de visite — ${titreBien} — ${d.prenom} ${d.nom}`,
+    _template: "table",
+    _captcha: "false",
+    _replyto: d.email,
+    _honey: piege,
+    "Bien": titreBien,
+    "Suite demandée": suite(d),
+    "Référence": reference,
+  };
+  for (const [, lignes] of sections(d)) for (const [k, v] of lignes) if (v) champs[k] = v;
+
+  const r = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(email)}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify(champs),
+  });
+  const corps = await r.json().catch(() => ({}));
+  if (!r.ok || String(corps.success) !== "true") {
+    throw new Error("La demande n'a pas pu être envoyée. Réessayez dans un instant ou appelez-nous directement.");
+  }
+}
+
 /* ——— Récapitulatif ——— */
 
 function Ligne({ label, valeur }: { label: string; valeur?: ReactNode }) {
@@ -569,7 +615,9 @@ function Recapitulatif({
   titre,
   onModifier,
   control,
+  viaFormSubmit,
 }: {
+  viaFormSubmit?: boolean;
   d: Demande;
   e: FieldErrors<Demande>;
   titre: React.RefObject<HTMLHeadingElement | null>;
@@ -635,7 +683,8 @@ function Recapitulatif({
         )} />
         <p className="text-[0.75rem] leading-5 text-anthracite/60">
           Vos informations sont destinées à l&apos;agence pour le suivi de votre demande et ne sont transmises à aucun tiers
-          sans votre accord. Vous pouvez y accéder, les faire rectifier ou supprimer à tout moment en contactant l&apos;agence.
+          sans votre accord.{viaFormSubmit && " Elles sont acheminées par e-mail via le service FormSubmit."} Vous pouvez y
+          accéder, les faire rectifier ou supprimer à tout moment en contactant l&apos;agence.
         </p>
       </div>
     </div>

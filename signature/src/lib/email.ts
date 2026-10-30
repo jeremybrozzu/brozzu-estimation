@@ -3,7 +3,7 @@ import nodemailer from "nodemailer";
 import type { Bien } from "@/content/types";
 import type { Conseiller } from "@/content/conseillers";
 import type { DemandeEnregistree } from "./stockage";
-import { formatHeure, formatJour } from "./creneaux";
+import { sections, suite } from "./resume";
 
 /**
  * Envoi de la fiche acquéreur au conseiller du bien.
@@ -18,61 +18,10 @@ import { formatHeure, formatJour } from "./creneaux";
 const echapper = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
-const euros = (s?: string) => (s ? `${Number(s.replace(/\D/g, "")).toLocaleString("fr-FR")} €` : "");
-const ouiNon = (s?: string) => (s === "oui" ? "Oui" : s === "non" ? "Non" : "");
-
-function suite(d: DemandeEnregistree) {
-  const c = d.demande;
-  if (c.choix === "agenda") return "Redirigé vers votre agenda Google pour réserver son créneau";
-  if (c.choix === "creneau" && c.creneau)
-    return `Créneau demandé : ${formatJour(c.creneau.debut)} à ${formatHeure(c.creneau.debut)} (à confirmer)`;
-  return "Souhaite être rappelé";
-}
-
-function sections(d: DemandeEnregistree): [string, [string, string][]][] {
-  const c = d.demande;
-  return [
-    ["Contact", [
-      ["Nom", `${c.prenom} ${c.nom}`],
-      ["Téléphone", c.telephone],
-      ["E-mail", c.email],
-      ["Date de naissance", c.dateNaissance ? new Date(c.dateNaissance).toLocaleDateString("fr-FR") : ""],
-      ["Adresse", `${c.adresse}, ${c.codePostal} ${c.ville}`],
-    ]],
-    ["Recherche", [
-      ["Type de bien", c.typeRecherche ?? ""],
-      ["Communes", c.communes.join(", ")],
-      ["Quartiers", c.quartiers ?? ""],
-      ["Chambres", c.chambres ?? ""],
-      ["Surface minimum", c.surfaceMin ? `${c.surfaceMin} m²` : ""],
-      ["Critères", c.criteres.map((x) => (x === "Autre" && c.critereAutre ? `Autre (${c.critereAutre})` : x)).join(", ")],
-    ]],
-    ["Financement", [
-      ["Budget maximum", euros(c.budgetMax)],
-      ["Apport", euros(c.apport)],
-      ["Financement étudié", c.financementEtudie ?? ""],
-      ["Courtier partenaire", c.courtier === "oui" ? "Oui — accord donné pour transmettre ses coordonnées (sans données financières)" : ouiNon(c.courtier)],
-    ]],
-    ["Projet", [
-      ["Objectif", c.objectif ?? ""],
-      ["Délai", c.delai ?? ""],
-      ["Bien à vendre", ouiNon(c.bienAVendre)],
-      ...(c.bienAVendre === "oui"
-        ? ([
-            ["Commune du bien", c.venteCommune ?? ""],
-            ["Type", c.venteType ?? ""],
-            ["Déjà en vente", ouiNon(c.venteDejaEnVente)],
-            ["Estimation gratuite", ouiNon(c.venteEstimation)],
-          ] as [string, string][])
-        : []),
-    ]],
-  ];
-}
-
 export function composerEmail(d: DemandeEnregistree, bien: Bien) {
   const c = d.demande;
   const sujet = `Nouvelle demande de visite — ${bien.titre}, ${bien.commune} — ${c.prenom} ${c.nom}`;
-  const blocs = sections(d)
+  const blocs = sections(d.demande)
     .map(([titre, lignes]) => {
       const rangs = lignes
         .filter(([, v]) => v)
@@ -87,16 +36,16 @@ export function composerEmail(d: DemandeEnregistree, bien: Bien) {
   const html = `<div style="max-width:640px;margin:0 auto;padding:32px;background:#f4efe6">
 <p style="margin:0;font:600 11px/1.4 Arial,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:#9b7355">BROZZU – L'Atelier Immo · Signature Collection</p>
 <h2 style="margin:12px 0 4px;font:400 26px/1.25 Georgia,serif;color:#302c29">${echapper(bien.titre)} · ${echapper(bien.commune)}</h2>
-<p style="margin:0 0 4px;font:14px/1.5 Arial,sans-serif;color:#302c29"><strong>${echapper(suite(d))}</strong></p>
+<p style="margin:0 0 4px;font:14px/1.5 Arial,sans-serif;color:#302c29"><strong>${echapper(suite(d.demande))}</strong></p>
 <p style="margin:0;font:13px/1.5 Arial,sans-serif;color:#8a8079">Référence ${echapper(d.reference)} · reçue le ${new Date(d.recueLe).toLocaleString("fr-FR", { timeZone: "Europe/Paris" })}${bien.mentions?.reference ? ` · bien réf. ${echapper(bien.mentions.reference)}` : ""}</p>
 ${blocs}
 <p style="margin:32px 0 0;font:12px/1.5 Arial,sans-serif;color:#8a8079">Répondez directement à ce message pour écrire à l'acquéreur.</p>
 </div>`;
   const texte = [
     `${bien.titre} · ${bien.commune}`,
-    suite(d),
+    suite(d.demande),
     `Référence ${d.reference}`,
-    ...sections(d).flatMap(([t, l]) => ["", t.toUpperCase(), ...l.filter(([, v]) => v).map(([k, v]) => `${k} : ${v}`)]),
+    ...sections(d.demande).flatMap(([t, l]) => ["", t.toUpperCase(), ...l.filter(([, v]) => v).map(([k, v]) => `${k} : ${v}`)]),
   ].join("\n");
   return { sujet, html, texte };
 }
