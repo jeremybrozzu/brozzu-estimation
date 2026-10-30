@@ -88,7 +88,7 @@ export function Diagnostic({ bien }: { bien: Bien }) {
                     bas="logement extrêmement peu performant"
                     valeurs={
                       <>
-                        <strong className="font-serif text-2xl font-medium tabular-nums">{d.consommation ?? "—"}</strong>
+                        <strong className="font-serif text-2xl font-medium lining-nums tabular-nums">{d.consommation ?? "—"}</strong>
                         <span className="text-[0.68rem] text-anthracite/70">kWh/m²/an</span>
                       </>
                     }
@@ -102,7 +102,7 @@ export function Diagnostic({ bien }: { bien: Bien }) {
                     ges
                     valeurs={
                       <>
-                        <strong className="font-serif text-2xl font-medium tabular-nums">{d.emissions ?? "—"}</strong>
+                        <strong className="font-serif text-2xl font-medium lining-nums tabular-nums">{d.emissions ?? "—"}</strong>
                         <span className="text-[0.68rem] text-anthracite/70">kg CO₂/m²/an</span>
                       </>
                     }

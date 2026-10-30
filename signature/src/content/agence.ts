@@ -5,6 +5,8 @@
 export const agence = {
   nom: "BROZZU – L'Atelier Immo",
   site: "https://www.brozzu.fr",
+  /** Ligne directe affichée par le bouton « Contactez un agent ». */
+  telephone: { affiche: "06 28 51 44 16", lien: "tel:+33628514416" },
   fuseau: "Europe/Paris",
   visite: {
     /** Durée d'une visite, en minutes. */

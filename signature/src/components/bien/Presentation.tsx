@@ -48,7 +48,7 @@ export function Presentation({ bien }: { bien: Bien }) {
                 className={`flex flex-col-reverse gap-1 py-7 pr-4 sm:px-6 ${i > 0 ? "lg:border-l lg:border-champagne" : "sm:pl-0"}`}
               >
                 <dt className="surtitre text-[0.6rem] text-bronze">{ch.label}</dt>
-                <dd className="font-serif text-4xl leading-none tabular-nums sm:text-5xl">
+                <dd className="font-serif text-4xl leading-none lining-nums tabular-nums sm:text-5xl">
                   {ch.valeur}
                   {ch.unite && <span className="ml-1 text-xl text-anthracite/60">{ch.unite}</span>}
                 </dd>

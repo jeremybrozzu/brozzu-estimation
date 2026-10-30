@@ -11,6 +11,7 @@ import { Galerie } from "@/components/bien/Galerie";
 import { Caracteristiques } from "@/components/bien/Caracteristiques";
 import { Diagnostic } from "@/components/bien/Diagnostic";
 import { ParcoursVisite } from "@/components/visite/ParcoursVisite";
+import { ContactAgent } from "@/components/ContactAgent";
 
 export function generateStaticParams() {
   return biens.filter((b) => b.publie).map((b) => ({ slug: b.slug }));
@@ -104,14 +105,17 @@ export default async function BienPage({ params }: PageProps<"/[slug]">) {
               </p>
               <p className="mt-8 font-serif text-xl italic text-champagne">Des lieux. Des vies. Une histoire.</p>
             </div>
-            <a
-              href="#visite"
-              data-ouvrir-visite
-              className="group flex items-center justify-center gap-4 self-start rounded-full bg-ivoire py-4 pl-7 pr-6 text-anthracite transition-colors hover:bg-champagne lg:self-center"
-            >
-              <span className="surtitre text-[0.66rem]">Organiser une visite</span>
-              <span aria-hidden className="block h-px w-8 bg-cuivre transition-all duration-500 ease-luxe group-hover:w-12" />
-            </a>
+            <div className="flex w-full flex-col gap-3 sm:w-auto sm:min-w-[19rem] lg:self-center">
+              <a
+                href="#visite"
+                data-ouvrir-visite
+                className="group flex items-center justify-center gap-4 rounded-full bg-ivoire py-4 pl-7 pr-6 text-anthracite transition-colors hover:bg-champagne"
+              >
+                <span className="surtitre text-[0.66rem]">Organiser une visite</span>
+                <span aria-hidden className="block h-px w-8 bg-cuivre transition-all duration-500 ease-luxe group-hover:w-12" />
+              </a>
+              <ContactAgent />
+            </div>
           </div>
         </section>
       </main>
