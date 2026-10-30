@@ -51,5 +51,7 @@ export function iconePrestation(libelle: string): NomIcone {
   if (l.includes("arbor") || l.includes("jardin")) return "arbre";
   if (l.includes("garage") || l.includes("stationnement")) return "stationnement";
   if (l.includes("clim")) return "climatisation";
+  if (l.includes("ascenseur")) return "etage";
+  if (l.includes("interphone")) return "pieces";
   return "maison";
 }

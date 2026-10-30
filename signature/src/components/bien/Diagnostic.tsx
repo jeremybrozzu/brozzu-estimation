@@ -166,6 +166,14 @@ export function Diagnostic({ bien }: { bien: Bien }) {
                 <dt className="text-anthracite/60">Honoraires</dt>
                 <dd className="mt-1 leading-6">{m?.honoraires ?? <ACompleter />}</dd>
               </div>
+              {!m?.copropriete && bien.typeBien === "Appartement" && (
+                <div className="py-5">
+                  <dt className="text-anthracite/60">Copropriété</dt>
+                  <dd className="mt-1 leading-6">
+                    <ACompleter quoi="nombre de lots, charges annuelles, procédure en cours" />
+                  </dd>
+                </div>
+              )}
               {m?.copropriete && (
                 <div className="py-5">
                   <dt className="text-anthracite/60">Copropriété</dt>

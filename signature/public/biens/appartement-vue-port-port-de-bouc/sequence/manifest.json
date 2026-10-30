@@ -1,0 +1,21 @@
+{
+  "slug": "appartement-vue-port-port-de-bouc",
+  "generatedAt": "2026-10-30T14:26:29.908Z",
+  "source": {
+    "width": 1920,
+    "height": 1080,
+    "duration": 33.21
+  },
+  "sets": {
+    "hd": {
+      "count": 240,
+      "width": 1600,
+      "height": 900
+    },
+    "sd": {
+      "count": 120,
+      "width": 1280,
+      "height": 720
+    }
+  }
+}

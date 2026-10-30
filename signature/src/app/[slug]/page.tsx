@@ -86,6 +86,7 @@ export default async function BienPage({ params }: PageProps<"/[slug]">) {
           accroche={bien.accroche}
           chapitres={bien.chapitres}
           demo={bien.demo}
+          hauteurDefilement={bien.hauteurDefilement}
         />
 
         <Presentation bien={bien} />

@@ -18,6 +18,8 @@ interface Props {
   accroche: string;
   chapitres: ChapitreImmersif[];
   demo?: boolean;
+  /** Hauteur de défilement, en hauteurs d'écran. */
+  hauteurDefilement?: number;
 }
 
 const REDUCED_MOTION = "(prefers-reduced-motion: reduce)";
@@ -29,14 +31,14 @@ function subscribeReducedMotion(cb: () => void) {
 }
 const noop = () => () => {};
 
-/** Hauteur de défilement de l'expérience, en hauteurs d'écran. */
+/** Hauteur de défilement par défaut, en hauteurs d'écran. */
 const SCROLL_LENGTH = 5;
 
 /**
  * Accueil immersif : la vidéo du bien, découpée en images, avance au rythme
  * du défilement. Le dessin se fait dans un <canvas> en mode « cover ».
  */
-export function ImmersiveHero({ sequence, titre, lieu, accroche, chapitres, demo }: Props) {
+export function ImmersiveHero({ sequence, titre, lieu, accroche, chapitres, demo, hauteurDefilement }: Props) {
   const reducedMotion = useSyncExternalStore(subscribeReducedMotion, getReducedMotion, () => false);
   // Le jeu d'images dépend de l'appareil : choisi une fois, côté navigateur uniquement.
   const set = useSyncExternalStore(noop, pickSet, () => null);
@@ -54,6 +56,7 @@ export function ImmersiveHero({ sequence, titre, lieu, accroche, chapitres, demo
       accroche={accroche}
       chapitres={chapitres}
       demo={demo}
+      hauteurDefilement={hauteurDefilement}
     />
   );
 }
@@ -66,6 +69,7 @@ function ScrollSequence({
   accroche,
   chapitres,
   demo,
+  hauteurDefilement = SCROLL_LENGTH,
 }: Props & { sequence: SequenceManifest; set: "hd" | "sd" | null }) {
   const sectionRef = useRef<HTMLElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -117,6 +121,8 @@ function ScrollSequence({
             drawCover(ctx, img, cw, ch);
           }
           bg.style.display = framed ? "block" : "none";
+          // Mode cadre : les textes se resserrent pour ne pas chevaucher l'image.
+          sectionRef.current?.toggleAttribute("data-cadre", framed);
           current.current.drawn = key;
         }
       }
@@ -178,8 +184,8 @@ function ScrollSequence({
     <section
       ref={sectionRef}
       aria-label={`Découverte immersive — ${titre}`}
-      className="relative bg-noir"
-      style={{ height: `${SCROLL_LENGTH * 100}svh` }}
+      className="group/hero relative bg-noir"
+      style={{ height: `${hauteurDefilement * 100}svh` }}
     >
       <div className="sticky top-0 h-svh w-full overflow-hidden">
         {/* Poster immédiat (LCP), remplacé par le canvas dès que les images arrivent */}
@@ -209,7 +215,7 @@ function ScrollSequence({
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,rgba(23,22,21,0.55))]" />
 
         {/* Introduction */}
-        <div ref={introRef} className="sur-image absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
+        <div ref={introRef} className="sur-image absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(23,22,21,0.42),transparent_62%)] flex flex-col items-center justify-center px-6 text-center">
           <p className="surtitre text-champagne">Signature Collection</p>
           <h1 className="mt-6 max-w-4xl font-serif text-5xl font-medium leading-[1.02] text-ivoire sm:text-7xl lg:text-8xl">
             {titre}
@@ -232,7 +238,7 @@ function ScrollSequence({
             ref={(el) => {
               chapterRefs.current[i] = el;
             }}
-            className="sur-image invisible absolute inset-x-0 bottom-[16svh] px-6 opacity-0 xl:bottom-auto xl:left-[7vw] xl:right-auto xl:top-1/2 xl:max-w-[min(34rem,calc(43vw-30svh))] xl:-translate-y-1/2 xl:px-0"
+            className="sur-image invisible absolute inset-x-0 bottom-[16svh] px-6 opacity-0 xl:bottom-auto xl:left-[7vw] xl:right-auto xl:top-1/2 xl:max-w-[34rem] group-data-[cadre]/hero:xl:max-w-[min(34rem,calc(43vw-30svh))] xl:-translate-y-1/2 xl:px-0"
           >
             {c.surtitre && (
               <p className="surtitre flex items-center gap-4 text-champagne">

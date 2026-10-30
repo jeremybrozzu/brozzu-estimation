@@ -101,6 +101,8 @@ export interface Bien {
   accroche: string;
   /** Textes qui accompagnent la progression de la vidéo. */
   chapitres: ChapitreImmersif[];
+  /** Longueur de défilement de l'accueil, en hauteurs d'écran (5 par défaut ; plus pour une vidéo longue). */
+  hauteurDefilement?: number;
 
   /** Dossier public/biens/<sequence>/sequence produit par `npm run video`. */
   sequence: string | null;
