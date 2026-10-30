@@ -42,3 +42,4 @@ next-env.d.ts
 
 # demandes acquéreurs (données personnelles)
 /.donnees/
+!.env.example

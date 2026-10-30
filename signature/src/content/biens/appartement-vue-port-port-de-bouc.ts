@@ -91,5 +91,6 @@ export const appartementVuePortPortDeBouc: Bien = {
     description:
       "Appartement neuf de 60 m², 2 chambres, terrasse exposée sud avec vue sur le port de plaisance et stationnement en sous-sol à Port-de-Bouc (13110). Découvrez-le en immersion avec BROZZU – L'Atelier Immo.",
   },
+  conseiller: "jeremy-brozzu",
   annonceUrl: null,
 };

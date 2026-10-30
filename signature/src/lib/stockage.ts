@@ -19,7 +19,7 @@ export interface DemandeEnregistree {
   cleEnvoi: string;
   recueLe: string;
   bien: string;
-  statut: "creneau_a_valider" | "rappel_a_faire";
+  statut: "creneau_a_valider" | "agenda_redirige" | "rappel_a_faire";
   demande: Envoi["demande"];
 }
 
@@ -57,7 +57,8 @@ export function enregistrerDemande(envoi: Envoi): Promise<{ demande: DemandeEnre
       cleEnvoi: envoi.cleEnvoi,
       recueLe: maintenant.toISOString(),
       bien: envoi.bien,
-      statut: envoi.demande.choix === "creneau" ? "creneau_a_valider" : "rappel_a_faire",
+      statut:
+        envoi.demande.choix === "creneau" ? "creneau_a_valider" : envoi.demande.choix === "agenda" ? "agenda_redirige" : "rappel_a_faire",
       demande: envoi.demande,
     };
     await mkdir(DOSSIER, { recursive: true });

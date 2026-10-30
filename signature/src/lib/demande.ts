@@ -83,7 +83,8 @@ export const demandeSchema = z
 
     // Validation
     consentementTraitement: z.boolean().refine((v) => v, "Votre accord est nécessaire pour traiter la demande"),
-    choix: z.enum(["creneau", "rappel"]),
+    /** creneau : créneau choisi sur le site ; agenda : réservation dans l'agenda Google du conseiller ; rappel. */
+    choix: z.enum(["creneau", "agenda", "rappel"]),
     creneau: z.object({ debut: z.iso.datetime({ offset: true }), fin: z.iso.datetime({ offset: true }) }).optional(),
   })
   .superRefine((d, ctx) => {

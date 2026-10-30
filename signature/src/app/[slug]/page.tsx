@@ -12,6 +12,7 @@ import { Caracteristiques } from "@/components/bien/Caracteristiques";
 import { Diagnostic } from "@/components/bien/Diagnostic";
 import { ParcoursVisite } from "@/components/visite/ParcoursVisite";
 import { ContactAgent } from "@/components/ContactAgent";
+import { getConseiller, nomComplet } from "@/content/conseillers";
 
 export function generateStaticParams() {
   return biens.filter((b) => b.publie).map((b) => ({ slug: b.slug }));
@@ -73,6 +74,7 @@ export default async function BienPage({ params }: PageProps<"/[slug]">) {
   const bien = getBien((await params).slug);
   if (!bien) notFound();
   const sequence = await loadSequence(bien.sequence);
+  const conseiller = getConseiller(bien.conseiller);
   const lieu = [bien.commune, bien.secteur].filter(Boolean).join(" · ");
 
   return (
@@ -114,7 +116,7 @@ export default async function BienPage({ params }: PageProps<"/[slug]">) {
                 <span className="surtitre text-[0.66rem]">Organiser une visite</span>
                 <span aria-hidden className="block h-px w-8 bg-cuivre transition-all duration-500 ease-luxe group-hover:w-12" />
               </a>
-              <ContactAgent />
+              <ContactAgent conseiller={conseiller} />
             </div>
           </div>
         </section>
@@ -129,7 +131,12 @@ export default async function BienPage({ params }: PageProps<"/[slug]">) {
       </footer>
 
       <VisitButton />
-      <ParcoursVisite bien={bien.slug} titreBien={`${bien.titre} · ${bien.commune}`} />
+      <ParcoursVisite
+        bien={bien.slug}
+        titreBien={`${bien.titre} · ${bien.commune}`}
+        agenda={conseiller?.agenda}
+        conseiller={conseiller && nomComplet(conseiller)}
+      />
     </>
   );
 }

@@ -131,6 +131,9 @@ export interface Bien {
     description: string;
   };
 
+  /** Identifiant du conseiller (src/content/conseillers.ts) : e-mail, téléphone, agenda. */
+  conseiller?: string;
+
   /** Lien de l'annonce sur brozzu.fr (balise canonique, évite le contenu dupliqué). */
   annonceUrl?: string | null;
 }

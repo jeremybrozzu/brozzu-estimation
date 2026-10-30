@@ -13,7 +13,10 @@ import { ChoixCreneau } from "./ChoixCreneau";
 
 /**
  * Parcours acquéreur : 4 étapes, récapitulatif, puis
- * A — choix d'un créneau (à confirmer par l'agence) ou B — demande de rappel.
+ * A — choix d'un créneau ou B — demande de rappel.
+ * Si le conseiller du bien a un agenda Google de prise de rendez-vous, le choix A
+ * enregistre la fiche (envoyée à son e-mail) puis ouvre son agenda pour réserver.
+ * Sinon, créneaux proposés sur le site, à confirmer par l'agence.
  *
  * S'ouvre au clic sur tout élément portant `data-ouvrir-visite`.
  * En mode `apercu`, rien n'est transmis : l'aperçu l'indique clairement.
@@ -26,7 +29,21 @@ const ETAPE_FIN = 6;
 
 type Resultat = { reference: string; choix: Demande["choix"]; creneau?: Creneau; apercu: boolean };
 
-export function ParcoursVisite({ bien, titreBien, apercu = false }: { bien: string; titreBien: string; apercu?: boolean }) {
+export function ParcoursVisite({
+  bien,
+  titreBien,
+  agenda,
+  conseiller,
+  apercu = false,
+}: {
+  bien: string;
+  titreBien: string;
+  /** Page de prise de rendez-vous Google du conseiller. */
+  agenda?: string;
+  /** Nom du conseiller, affiché à l'acquéreur. */
+  conseiller?: string;
+  apercu?: boolean;
+}) {
   const [ouvert, setOuvert] = useState(false);
   const [etape, setEtape] = useState(0);
   const [depuisRecap, setDepuisRecap] = useState(false);
@@ -161,7 +178,12 @@ export function ParcoursVisite({ bien, titreBien, apercu = false }: { bien: stri
     const ok = await trigger("consentementTraitement", { shouldFocus: true });
     if (!ok) return;
     setErreurEnvoi(null);
-    if (choix === "creneau") {
+    if (choix === "creneau" && agenda) {
+      // La réservation se fait dans l'agenda Google du conseiller, après envoi de la fiche.
+      setValue("choix", "agenda");
+      setValue("creneau", undefined);
+      envoyer();
+    } else if (choix === "creneau") {
       setEtape(ETAPE_CRENEAU);
       if (!creneaux) chargerCreneaux();
     } else {
@@ -428,7 +450,9 @@ export function ParcoursVisite({ bien, titreBien, apercu = false }: { bien: stri
               </div>
             )}
 
-            {etape === ETAPE_FIN && resultat && <Confirmation r={resultat} titre={titre} />}
+            {etape === ETAPE_FIN && resultat && (
+              <Confirmation r={resultat} titre={titre} agenda={agenda} conseiller={conseiller} />
+            )}
 
             {erreurEnvoi && (
               <p role="alert" className="mt-8 border-l-2 border-[#a1342b] bg-[#a1342b]/5 px-4 py-3 text-sm text-[#a1342b]">
@@ -474,7 +498,9 @@ export function ParcoursVisite({ bien, titreBien, apercu = false }: { bien: stri
                   disabled={envoi === "en_cours"}
                   className="rounded-full bg-anthracite px-5 py-3.5 text-ivoire transition-colors hover:bg-noir disabled:opacity-50"
                 >
-                  <span className="surtitre text-[0.6rem]">Choisir un créneau de visite</span>
+                  <span className="surtitre text-[0.6rem]">
+                    {envoi === "en_cours" && v.choix === "agenda" ? "Envoi…" : "Choisir un créneau de visite"}
+                  </span>
                 </button>
               </div>
             )}
@@ -618,15 +644,47 @@ function Recapitulatif({
 
 /* ——— Confirmation ——— */
 
-function Confirmation({ r, titre }: { r: Resultat; titre: React.RefObject<HTMLHeadingElement | null> }) {
+function Confirmation({
+  r,
+  titre,
+  agenda,
+  conseiller,
+}: {
+  r: Resultat;
+  titre: React.RefObject<HTMLHeadingElement | null>;
+  agenda?: string;
+  conseiller?: string;
+}) {
   return (
     <div role="status">
-      <p className="surtitre text-[0.6rem] text-bronze">Merci</p>
+      <p className="surtitre text-[0.6rem] text-bronze">{r.choix === "agenda" ? "Dernière étape" : "Merci"}</p>
       <h2 id="parcours-titre" ref={titre} tabIndex={-1} className="mt-4 font-serif text-4xl leading-tight outline-none sm:text-5xl">
-        {r.choix === "creneau" ? "Votre demande de visite est transmise" : "Votre demande est bien reçue"}
+        {r.choix === "agenda"
+          ? "Choisissez votre créneau"
+          : r.choix === "creneau"
+            ? "Votre demande de visite est transmise"
+            : "Votre demande est bien reçue"}
       </h2>
 
-      {r.choix === "creneau" && r.creneau ? (
+      {r.choix === "agenda" && agenda ? (
+        <div className="mt-8 border-y border-champagne py-6">
+          <p className="text-sm leading-7 text-anthracite/80">
+            {!r.apercu && `Votre fiche est transmise${conseiller ? ` à ${conseiller}` : ""}. `}Réservez maintenant l&apos;horaire de votre
+            visite dans {conseiller ? "son" : "notre"} agenda : seuls les créneaux réellement libres y sont proposés, et
+            la confirmation vous parvient par e-mail.
+          </p>
+          <a
+            href={agenda}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-6 inline-flex items-center gap-3 rounded-full bg-cuivre py-4 pl-6 pr-5 text-ivoire transition-colors hover:bg-[#6d3218]"
+          >
+            <span className="surtitre text-[0.64rem]">Ouvrir l&apos;agenda et réserver</span>
+            <span aria-hidden>↗</span>
+          </a>
+          <p className="mt-3 text-xs text-anthracite/55">L&apos;agenda s&apos;ouvre dans un nouvel onglet.</p>
+        </div>
+      ) : r.choix === "creneau" && r.creneau ? (
         <div className="mt-8 border-y border-champagne py-6">
           <p className="surtitre text-[0.58rem] text-anthracite/55">Créneau demandé</p>
           <p className="mt-2 font-serif text-3xl first-letter:uppercase">{formatJour(r.creneau.debut)}</p>
@@ -650,8 +708,8 @@ function Confirmation({ r, titre }: { r: Resultat; titre: React.RefObject<HTMLHe
 
       {r.apercu && (
         <p className="mt-8 rounded-sm border border-dashed border-cuivre/50 bg-white/40 px-4 py-3 text-[0.8rem] leading-6 text-cuivre">
-          Aperçu : aucune information n&apos;a été transmise. Sur le site en ligne, la demande est enregistrée pour
-          l&apos;agence.
+          Aperçu : la fiche n&apos;a été ni enregistrée ni envoyée par e-mail. Sur le site en ligne, elle est enregistrée et
+          envoyée au conseiller.{r.choix === "agenda" && " Le lien vers l'agenda, lui, est bien réel."}
         </p>
       )}
     </div>

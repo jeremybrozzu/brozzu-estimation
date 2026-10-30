@@ -55,6 +55,20 @@ Le même schéma Zod (`src/lib/demande.ts`) valide le formulaire et l'API.
   (plages, durée, délai minimum). Marqués `demo: true` tant que Google Agenda n'est pas connecté :
   l'interface l'indique et ne présente jamais un créneau comme confirmé.
 
+### Conseillers, e-mail et agenda
+
+Chaque bien désigne son conseiller (`conseiller: "jeremy-brozzu"`, profils dans
+`src/content/conseillers.ts`) :
+
+- la fiche acquéreur est envoyée sur l'e-mail du conseiller (« Répondre à » = l'acquéreur) ;
+- « Contactez un agent » affiche son numéro ;
+- s'il a un agenda Google de prise de rendez-vous, « Choisir un créneau » enregistre et envoie
+  la fiche, puis ouvre son agenda (disponibilités réelles, pas de double réservation).
+  Sans agenda, le site propose ses propres créneaux, à confirmer par l'agence.
+
+L'envoi d'e-mails nécessite les variables SMTP décrites dans `.env.example`.
+Sans elles, la demande est enregistrée et un avertissement apparaît dans les journaux.
+
 ### Aperçu publié
 
 L'aperçu hors Next.js embarque le parcours compilé, en mode `apercu` (aucun envoi) :
@@ -81,5 +95,5 @@ public/brand/                      Logo et monogramme officiels
 2. ✅ Accueil immersif piloté par le scroll
 3. ✅ Présentation du bien : annonce, caractéristiques, galerie, DPE/GES, mentions légales
 4. ✅ Parcours acquéreur en 4 étapes (React Hook Form + Zod), récapitulatif, créneau ou rappel
-5. Serveur : stockage sécurisé, Google Agenda (OAuth côté serveur), e-mails, administration
+5. Serveur : ✅ e-mail au conseiller, ✅ prise de rendez-vous via son agenda Google ; reste : base de données, administration, mise en ligne
 6. Vérifications : performances, accessibilité, sécurité, mobile

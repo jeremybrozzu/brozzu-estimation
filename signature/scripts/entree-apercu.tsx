@@ -8,5 +8,11 @@ import { ParcoursVisite } from "@/components/visite/ParcoursVisite";
 
 const hote = document.getElementById("parcours-apercu")!;
 createRoot(hote).render(
-  <ParcoursVisite bien={hote.dataset.bien!} titreBien={hote.dataset.titre!} apercu />,
+  <ParcoursVisite
+    bien={hote.dataset.bien!}
+    titreBien={hote.dataset.titre!}
+    agenda={hote.dataset.agenda}
+    conseiller={hote.dataset.conseiller}
+    apercu
+  />,
 );
