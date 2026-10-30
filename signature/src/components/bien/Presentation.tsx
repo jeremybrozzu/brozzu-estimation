@@ -31,9 +31,11 @@ export function Presentation({ bien }: { bien: Bien }) {
           {bien.prix !== null && (
             <div className="lg:text-right">
               <p className="font-serif text-4xl text-cuivre sm:text-5xl">{formatEuros(bien.prix)}</p>
-              <p className="mt-2 text-xs leading-5 text-anthracite/60">
-                {bien.mentions?.honoraires ?? <ACompleter quoi="honoraires" />}
-              </p>
+              {bien.mentions?.honoraires !== false && (
+                <p className="mt-2 text-xs leading-5 text-anthracite/60">
+                  {bien.mentions?.honoraires ?? <ACompleter quoi="honoraires" />}
+                </p>
+              )}
             </div>
           )}
         </div>

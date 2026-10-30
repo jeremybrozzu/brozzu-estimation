@@ -162,10 +162,12 @@ export function Diagnostic({ bien }: { bien: Bien }) {
                   <dd className="mt-1 font-serif text-2xl">{formatEuros(bien.prix)}</dd>
                 </div>
               )}
-              <div className="py-5">
+              {m?.honoraires !== false && (
+                <div className="py-5">
                 <dt className="text-anthracite/60">Honoraires</dt>
                 <dd className="mt-1 leading-6">{m?.honoraires ?? <ACompleter />}</dd>
               </div>
+              )}
               {!m?.copropriete && bien.typeBien === "Appartement" && (
                 <div className="py-5">
                   <dt className="text-anthracite/60">Copropriété</dt>

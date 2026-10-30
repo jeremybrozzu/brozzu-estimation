@@ -3,7 +3,8 @@ import type { Bien } from "../types";
 /**
  * Appartement vue port — Port-de-Bouc (référence V20000033).
  * Sources : vidéo et photos fournies par l'agence, fiche de l'annonce brozzu.fr.
- * Non renseignés dans l'annonce : honoraires, copropriété (lots, charges, procédure),
+ * Honoraires : mention retirée à la demande de l'agence.
+ * Non renseignés dans l'annonce : copropriété (lots, charges, procédure),
  * date du DPE, étage exact (« 5 étage(s) » ambigu), surface Carrez (24 m² incohérent).
  */
 export const appartementVuePortPortDeBouc: Bien = {
@@ -31,7 +32,7 @@ export const appartementVuePortPortDeBouc: Bien = {
     complete: [
       "À Port-de-Bouc, cet appartement de 3 pièces construit en 2025 offre 60 m² au sein de la résidence Villa Marina, avec ascenseur, interphone et accès pour les personnes à mobilité réduite.",
       "Le séjour de 24 m² s'ouvre par de larges baies vitrées sur une terrasse exposée au sud, avec vue sur le port.",
-      "Deux chambres lumineuses, dont l'une donne sur la terrasse, et une salle d'eau complètent l'ensemble.",
+      "Deux chambres lumineuses, dont l'une donne sur la terrasse, une salle d'eau et une place de stationnement en sous-sol complètent l'ensemble.",
     ],
   },
 
@@ -44,9 +45,10 @@ export const appartementVuePortPortDeBouc: Bien = {
     sallesEau: 1,
     anneeConstruction: 2025,
     chauffage: "Central",
+    stationnement: "1 place en sous-sol",
     exposition: "Sud",
     taxeFonciere: null,
-    prestations: ["Terrasse", "Vue sur le port", "Ascenseur", "Interphone", "Accès personnes à mobilité réduite"],
+    prestations: ["Terrasse", "Vue sur le port", "Stationnement en sous-sol", "Ascenseur", "Interphone", "Accès personnes à mobilité réduite"],
   },
 
   photos: [
@@ -74,14 +76,14 @@ export const appartementVuePortPortDeBouc: Bien = {
 
   mentions: {
     reference: "V20000033",
-    honoraires: null,
+    honoraires: false,
     copropriete: null,
   },
 
   seo: {
     titre: "Appartement 3 pièces vue port à Port-de-Bouc — BROZZU",
     description:
-      "Appartement neuf de 60 m², 2 chambres, terrasse exposée sud avec vue sur le port de plaisance à Port-de-Bouc (13110). Découvrez-le en immersion avec BROZZU – L'Atelier Immo.",
+      "Appartement neuf de 60 m², 2 chambres, terrasse exposée sud avec vue sur le port de plaisance et stationnement en sous-sol à Port-de-Bouc (13110). Découvrez-le en immersion avec BROZZU – L'Atelier Immo.",
   },
   annonceUrl: null,
 };

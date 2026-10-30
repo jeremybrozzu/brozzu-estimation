@@ -80,8 +80,9 @@ export interface Mentions {
   /**
    * Ex. « Honoraires à la charge du vendeur » ou
    * « Honoraires de 4 % TTC à la charge de l'acquéreur, soit un prix hors honoraires de … ».
+   * `false` : mention retirée à la demande de l'agence.
    */
-  honoraires: string | null;
+  honoraires: string | null | false;
   /** `null` : non concerné ou non renseigné. */
   copropriete: Copropriete | null;
 }
