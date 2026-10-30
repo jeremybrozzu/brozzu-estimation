@@ -564,15 +564,64 @@ async function envoyerParFormSubmit(email: string, d: Demande, titreBien: string
   };
   for (const [, lignes] of sections(d)) for (const [k, v] of lignes) if (v) champs[k] = v;
 
-  const r = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(email)}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify(champs),
-  });
+  let r: Response;
+  try {
+    r = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(email)}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify(champs),
+    });
+  } catch {
+    // Réponse refusée par le navigateur (en-têtes CORS absents, typiquement au premier envoi
+    // depuis un nouveau site) : on bascule sur l'envoi classique, qui n'est pas soumis à CORS.
+    return envoyerParFormulaireClassique(email, champs);
+  }
   const corps = await r.json().catch(() => ({}));
   if (!r.ok || String(corps.success) !== "true") {
-    throw new Error("La demande n'a pas pu être envoyée. Réessayez dans un instant ou appelez-nous directement.");
+    console.warn("[FormSubmit]", r.status, corps);
+    return envoyerParFormulaireClassique(email, champs);
   }
+}
+
+/**
+ * Envoi classique de formulaire HTML vers FormSubmit, dans une iframe invisible :
+ * aucune restriction CORS. La réponse n'est pas lisible ; on attend le chargement de l'iframe.
+ */
+function envoyerParFormulaireClassique(email: string, champs: Record<string, string>) {
+  return new Promise<void>((resolve) => {
+    const nom = `formsubmit-${Date.now()}`;
+    const cadre = document.createElement("iframe");
+    cadre.name = nom;
+    cadre.hidden = true;
+    cadre.setAttribute("aria-hidden", "true");
+    const form = document.createElement("form");
+    form.method = "POST";
+    form.action = `https://formsubmit.co/${encodeURIComponent(email)}`;
+    form.target = nom;
+    form.hidden = true;
+    form.acceptCharset = "UTF-8";
+    for (const [k, v] of Object.entries(champs)) {
+      const champ = document.createElement("input");
+      champ.type = "hidden";
+      champ.name = k;
+      champ.value = v;
+      form.appendChild(champ);
+    }
+    let fini = false;
+    const terminer = () => {
+      if (fini) return;
+      fini = true;
+      setTimeout(() => {
+        form.remove();
+        cadre.remove();
+      }, 1000);
+      resolve();
+    };
+    cadre.addEventListener("load", terminer);
+    setTimeout(terminer, 6000);
+    document.body.append(cadre, form);
+    form.submit();
+  });
 }
 
 /* ——— Récapitulatif ——— */
