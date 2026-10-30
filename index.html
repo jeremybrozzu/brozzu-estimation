@@ -490,9 +490,10 @@ footer p{max-width:70ch;margin:0 0 6px}
 document.getElementById("nojs").hidden=true;
 (function(){const s=document.createElement("script");s.src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js";s.async=true;document.head.append(s);})();
 /* ---------- Réglages de l'agence ----------
-   email   : adresse qui reçoit chaque demande (envoi via FormSubmit ; la première demande déclenche un e-mail d'activation à valider)
+   endpoint: adresse de l'application Web Google Apps Script (apps-script/Code.gs) qui envoie l'e-mail et remplit la feuille « Demandes »
+   email   : adresse de secours via FormSubmit, utilisée seulement si endpoint est vide ou ne répond pas
    booking : lien de la page de réservation Google Agenda (planning de rendez-vous) ; vide = bouton masqué */
-const CONFIG = {email:"jeremy@brozzu.fr", booking:"https://calendar.app.google/xff9KgEb6qoKJFPe7"};
+const CONFIG = {endpoint:"", email:"jeremy@brozzu.fr", booking:"https://calendar.app.google/xff9KgEb6qoKJFPe7"};
 
 /* ---------- Données de marché (€/m², relevés octobre 2026) ----------
    pap = [appartement, maison] prix moyen PAP.fr (DVF + annonces) ; ra = prix médian RealAdvisor ; petit = peu de ventes d'appartements */
@@ -1126,6 +1127,11 @@ const ready=(async()=>{
 let lastLead=null,lastEst=null;
 const L1=(arr,v)=>{const x=arr.find(e=>e[0]===v);return x?x[1]:v||"";};
 async function sendMail(subject,fields){
+  if(CONFIG.endpoint){
+    try{const r=await fetch(CONFIG.endpoint,{method:"POST",body:JSON.stringify(Object.assign({_source:"brozzu-estimation",_subject:subject},fields))});
+      const j=await r.json().catch(()=>({}));if(String(j.success)==="true")return true;}
+    catch(e){}
+  }
   if(!CONFIG.email)return false;
   try{const r=await fetch("https://formsubmit.co/ajax/"+encodeURIComponent(CONFIG.email),{method:"POST",
       headers:{"Content-Type":"application/json","Accept":"application/json"},
