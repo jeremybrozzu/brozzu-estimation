@@ -2,19 +2,23 @@ import { z } from "zod";
 
 /**
  * Fiche acquéreur : schéma unique, utilisé par le formulaire (navigateur)
- * et par l'API (serveur). Seuls prénom, nom, e-mail et téléphone sont obligatoires,
- * ainsi que le consentement au traitement de la demande.
+ * et par l'API (serveur). Obligatoires à la demande de l'agence : identité,
+ * date de naissance, adresse complète, e-mail, téléphone, type de bien, communes,
+ * chambres, budget, apport, financement, courtier et bien à vendre.
  */
 
 const texte = (max = 200) => z.string().trim().max(max, `${max} caractères maximum`);
 const optionnel = (max = 200) => texte(max).optional().or(z.literal(""));
 const choix = <T extends readonly [string, ...string[]]>(valeurs: T) => z.enum(valeurs).optional().or(z.literal(""));
-const montant = z
-  .string()
-  .trim()
-  .regex(/^\d[\d\s ]*$/, "Indiquez un montant en euros, sans décimale")
-  .optional()
-  .or(z.literal(""));
+/** Choix obligatoire : la valeur vide initiale est refusée avec un message clair. */
+const choixRequis = <T extends readonly [string, ...string[]]>(valeurs: T, message = "Choisissez une réponse") =>
+  z.union([z.enum(valeurs), z.literal("")]).refine((v) => v !== "", message);
+const montant = (message: string) =>
+  z
+    .string()
+    .trim()
+    .min(1, message)
+    .regex(/^\d[\d\s ]*$/, "Indiquez un montant en euros, sans décimale");
 
 export const TYPES_RECHERCHE = ["Maison", "Appartement", "Terrain", "Maison ou appartement", "Autre"] as const;
 export const CHAMBRES = ["1", "2", "3", "4", "5 ou plus", "Sans préférence"] as const;
@@ -36,17 +40,15 @@ export const demandeSchema = z
     nom: texte(80).min(1, "Indiquez votre nom"),
     dateNaissance: z
       .string()
-      .optional()
-      .or(z.literal(""))
+      .min(1, "Indiquez votre date de naissance")
       .refine((v) => {
-        if (!v) return true;
         const d = new Date(v);
         const age = (Date.now() - d.getTime()) / (365.25 * 24 * 3600 * 1000);
         return !Number.isNaN(d.getTime()) && age >= 18 && age <= 110;
       }, "Vérifiez la date de naissance"),
-    adresse: optionnel(200),
-    codePostal: z.string().trim().regex(/^\d{5}$/, "Code postal à 5 chiffres").optional().or(z.literal("")),
-    ville: optionnel(100),
+    adresse: texte(200).min(1, "Indiquez votre adresse postale"),
+    codePostal: z.string().trim().min(1, "Indiquez votre code postal").regex(/^\d{5}$/, "Code postal à 5 chiffres"),
+    ville: texte(100).min(1, "Indiquez votre ville"),
     email: z.string().trim().min(1, "Indiquez votre adresse e-mail").pipe(z.email("Adresse e-mail invalide")),
     telephone: z
       .string()
@@ -55,25 +57,25 @@ export const demandeSchema = z
       .refine((v) => TELEPHONE.test(v.replace(/[\s.\-()]/g, "")), "Numéro de téléphone invalide"),
 
     // Étape 2 — Votre recherche immobilière
-    typeRecherche: choix(TYPES_RECHERCHE),
-    communes: z.array(texte(80)).max(20, "20 communes maximum"),
+    typeRecherche: choixRequis(TYPES_RECHERCHE, "Choisissez le type de bien recherché"),
+    communes: z.array(texte(80)).min(1, "Ajoutez au moins une commune").max(20, "20 communes maximum"),
     quartiers: optionnel(1000),
-    chambres: choix(CHAMBRES),
+    chambres: choixRequis(CHAMBRES, "Choisissez le nombre de chambres"),
     surfaceMin: z.string().trim().regex(/^\d{1,5}$/, "Indiquez une surface en m²").optional().or(z.literal("")),
     criteres: z.array(z.enum(CRITERES)),
     critereAutre: optionnel(200),
 
     // Étape 3 — Votre financement
-    budgetMax: montant,
-    apport: montant,
-    financementEtudie: choix(FINANCEMENT),
-    courtier: choix(OUI_NON),
+    budgetMax: montant("Indiquez votre budget maximum"),
+    apport: montant("Indiquez votre apport (0 si aucun)"),
+    financementEtudie: choixRequis(FINANCEMENT),
+    courtier: choixRequis(OUI_NON),
     consentementCourtier: z.boolean(),
 
     // Étape 4 — Parlons de votre projet
     objectif: choix(OBJECTIFS),
     delai: choix(DELAIS),
-    bienAVendre: choix(OUI_NON),
+    bienAVendre: choixRequis(OUI_NON),
     venteCommune: optionnel(100),
     venteType: choix(["Maison", "Appartement"] as const),
     venteDejaEnVente: choix(OUI_NON),
@@ -115,7 +117,9 @@ export const valeursInitiales: Demande = {
   typeRecherche: "", communes: [], quartiers: "", chambres: "", surfaceMin: "", criteres: [], critereAutre: "",
   budgetMax: "", apport: "", financementEtudie: "", courtier: "", consentementCourtier: false,
   objectif: "", delai: "", bienAVendre: "", venteCommune: "", venteType: "", venteDejaEnVente: "", venteEstimation: "",
-  consentementTraitement: false, choix: "rappel", creneau: undefined,
+  // Coché par défaut à la demande de l'agence (traitement nécessaire à la demande de visite).
+  // L'accord pour le courtier, lui, reste décoché : il doit être donné explicitement.
+  consentementTraitement: true, choix: "rappel", creneau: undefined,
 };
 
 /** Champs validés à chaque étape, avant de passer à la suivante. */

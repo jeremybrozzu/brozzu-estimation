@@ -94,7 +94,13 @@ export function Pastilles({
     <fieldset>
       <legend className="text-[0.82rem] font-medium text-anthracite">
         {legende}
-        {!requis && <span className="font-normal text-anthracite/45"> · facultatif</span>}
+        {requis ? (
+          <span className="text-cuivre" aria-hidden>
+            {" "}*
+          </span>
+        ) : (
+          <span className="font-normal text-anthracite/45"> · facultatif</span>
+        )}
       </legend>
       <div className="mt-3 flex flex-wrap gap-2">
         {opts.map((o) => {
@@ -183,10 +189,12 @@ export function Communes({
   valeurs,
   onChange,
   erreur,
+  requis,
 }: {
   valeurs: string[];
   onChange: (v: string[]) => void;
   erreur?: string;
+  requis?: boolean;
 }) {
   const id = useId();
   const [saisie, setSaisie] = useState("");
@@ -203,7 +211,9 @@ export function Communes({
 
   return (
     <div>
-      <Libelle htmlFor={id}>Dans quelle(s) commune(s) recherchez-vous ?</Libelle>
+      <Libelle htmlFor={id} requis={requis}>
+        Dans quelle(s) commune(s) recherchez-vous ?
+      </Libelle>
       {valeurs.length > 0 && (
         <ul className="mt-3 flex flex-wrap gap-2" aria-label="Communes ajoutées">
           {valeurs.map((v) => (

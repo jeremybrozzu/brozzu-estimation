@@ -45,11 +45,20 @@ export function ParcoursVisite({ bien, titreBien, apercu = false }: { bien: stri
   const form = useForm<Demande>({
     resolver: zodResolver(demandeSchema),
     defaultValues: valeursInitiales,
-    mode: "onTouched",
+    // Erreurs affichées au clic sur « Continuer », puis effacées dès que le champ est corrigé
+    // (et non à la sortie du champ : la page bougerait sous le pointeur au moment du clic).
+    mode: "onSubmit",
   });
   const { register, control, trigger, setValue, getValues, formState } = form;
   const e = formState.errors;
   const v = useWatch({ control });
+
+  useEffect(() => {
+    const abonnement = form.watch((_, { name }) => {
+      if (name && form.getFieldState(name).error) form.trigger(name);
+    });
+    return () => abonnement.unsubscribe();
+  }, [form]);
 
   // Ouverture depuis n'importe quel bouton « Organiser une visite ».
   useEffect(() => {
@@ -275,10 +284,10 @@ export function ParcoursVisite({ bien, titreBien, apercu = false }: { bien: stri
               <div className="mt-8 grid gap-7 sm:grid-cols-2">
                 <Champ label="Prénom" requis autoComplete="given-name" erreur={e.prenom?.message} {...register("prenom")} />
                 <Champ label="Nom" requis autoComplete="family-name" erreur={e.nom?.message} {...register("nom")} />
-                <Champ label="Date de naissance" type="date" autoComplete="bday" erreur={e.dateNaissance?.message} {...register("dateNaissance")} className="sm:col-span-2" />
-                <Champ label="Adresse postale" autoComplete="street-address" erreur={e.adresse?.message} {...register("adresse")} className="sm:col-span-2" />
-                <Champ label="Code postal" inputMode="numeric" autoComplete="postal-code" maxLength={5} erreur={e.codePostal?.message} {...register("codePostal")} />
-                <Champ label="Ville" autoComplete="address-level2" erreur={e.ville?.message} {...register("ville")} />
+                <Champ label="Date de naissance" requis type="date" autoComplete="bday" erreur={e.dateNaissance?.message} {...register("dateNaissance")} className="sm:col-span-2" />
+                <Champ label="Adresse postale" requis autoComplete="street-address" erreur={e.adresse?.message} {...register("adresse")} className="sm:col-span-2" />
+                <Champ label="Code postal" requis inputMode="numeric" autoComplete="postal-code" maxLength={5} erreur={e.codePostal?.message} {...register("codePostal")} />
+                <Champ label="Ville" requis autoComplete="address-level2" erreur={e.ville?.message} {...register("ville")} />
                 <Champ label="Adresse e-mail" requis type="email" autoComplete="email" inputMode="email" erreur={e.email?.message} {...register("email")} className="sm:col-span-2" />
                 <Champ label="Numéro de téléphone" requis type="tel" autoComplete="tel" inputMode="tel" placeholder="06 12 34 56 78" erreur={e.telephone?.message} {...register("telephone")} className="sm:col-span-2" />
                 <p className="text-[0.75rem] text-anthracite/55 sm:col-span-2">
@@ -290,10 +299,10 @@ export function ParcoursVisite({ bien, titreBien, apercu = false }: { bien: stri
             {etape === 1 && (
               <div className="mt-8 flex flex-col gap-9">
                 <Controller control={control} name="typeRecherche" render={({ field }) => (
-                  <Pastilles legende="Quel type de bien recherchez-vous ?" name={field.name} options={TYPES_RECHERCHE} valeur={field.value} onChange={field.onChange} />
+                  <Pastilles requis legende="Quel type de bien recherchez-vous ?" name={field.name} options={TYPES_RECHERCHE} valeur={field.value} onChange={field.onChange} erreur={e.typeRecherche?.message} />
                 )} />
                 <Controller control={control} name="communes" render={({ field }) => (
-                  <Communes valeurs={field.value} onChange={field.onChange} erreur={e.communes?.message} />
+                  <Communes requis valeurs={field.value} onChange={field.onChange} erreur={e.communes?.message} />
                 )} />
                 <div>
                   <label htmlFor="quartiers" className="block text-[0.82rem] font-medium">
@@ -307,7 +316,7 @@ export function ParcoursVisite({ bien, titreBien, apercu = false }: { bien: stri
                   />
                 </div>
                 <Controller control={control} name="chambres" render={({ field }) => (
-                  <Pastilles legende="Combien de chambres recherchez-vous ?" name={field.name} options={CHAMBRES} valeur={field.value} onChange={field.onChange} />
+                  <Pastilles requis legende="Combien de chambres recherchez-vous ?" name={field.name} options={CHAMBRES} valeur={field.value} onChange={field.onChange} erreur={e.chambres?.message} />
                 )} />
                 <Champ label="Quelle surface habitable minimum souhaitez-vous ?" inputMode="numeric" suffixe="m²" erreur={e.surfaceMin?.message} {...register("surfaceMin")} className="max-w-xs" />
                 <Controller control={control} name="criteres" render={({ field }) => (
@@ -322,14 +331,16 @@ export function ParcoursVisite({ bien, titreBien, apercu = false }: { bien: stri
             {etape === 2 && (
               <div className="mt-8 flex flex-col gap-9">
                 <div className="grid gap-7 sm:grid-cols-2">
-                  <Champ label="Quel est votre budget maximum ?" inputMode="numeric" suffixe="€" erreur={e.budgetMax?.message} {...register("budgetMax")} />
-                  <Champ label="Quel est votre apport personnel envisagé ?" inputMode="numeric" suffixe="€" erreur={e.apport?.message} {...register("apport")} />
+                  <Champ label="Quel est votre budget maximum ?" requis inputMode="numeric" suffixe="€" erreur={e.budgetMax?.message} {...register("budgetMax")} />
+                  <Champ label="Quel est votre apport personnel envisagé ?" requis inputMode="numeric" suffixe="€" erreur={e.apport?.message} {...register("apport")} />
                 </div>
                 <Controller control={control} name="financementEtudie" render={({ field }) => (
-                  <Pastilles legende="Avez-vous déjà étudié votre financement ?" name={field.name} options={FINANCEMENT} valeur={field.value} onChange={field.onChange} />
+                  <Pastilles requis legende="Avez-vous déjà étudié votre financement ?" name={field.name} options={FINANCEMENT} valeur={field.value} onChange={field.onChange} erreur={e.financementEtudie?.message} />
                 )} />
                 <Controller control={control} name="courtier" render={({ field }) => (
                   <Pastilles
+                    requis
+                    erreur={e.courtier?.message}
                     legende="Souhaitez-vous être mis en relation avec un courtier partenaire pour une étude gratuite ?"
                     name={field.name}
                     options={[{ valeur: "oui", label: "Oui" }, { valeur: "non", label: "Non" }]}
@@ -364,6 +375,8 @@ export function ParcoursVisite({ bien, titreBien, apercu = false }: { bien: stri
                 )} />
                 <Controller control={control} name="bienAVendre" render={({ field }) => (
                   <Pastilles
+                    requis
+                    erreur={e.bienAVendre?.message}
                     legende="Avez-vous un bien immobilier à vendre pour financer votre acquisition ?"
                     name={field.name}
                     options={[{ valeur: "oui", label: "Oui" }, { valeur: "non", label: "Non" }]}
